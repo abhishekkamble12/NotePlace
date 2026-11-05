@@ -1,0 +1,337 @@
+# CiteGuard Notebook (Phase 2): a source-grounded research and study notebook (NotebookLM-style)
+
+Vision: `00_VISION.txt`. Build plan: `04_notebook_roadmap.txt`. Phase 1: `01_citeguard_spec.txt`.
+
+## 1. Problem statement
+
+> People who read many documents want answers that point to the exact passage they came from, plus study material built only from their own sources. General chatbots answer from memory, and their citations are often vague or invented. Build a multi-user web app where each notebook holds the user's own sources (PDF including scanned pages, tables and charts, DOCX, web pages, text, audio). Chat answers only from those sources and cites the exact passage for every sentence. A single verified output pipeline turns the sources into study material: briefing, FAQ, study guide, timeline, flashcards with spaced repetition, quizzes, a mind map, a two-host audio overview and a narrated slide video. Every generated item carries citations checked by the same verifier used in CiteGuard. Parsing, retrieval and generation quality are measured on labeled notebooks, not asserted.
+
+**Relation to Phase 1:** CiteGuard Research researches the open web and writes a verified report. CiteGuard Notebook answers questions over the user's own documents and produces study material. Both are one product in one repo: Notebook reuses `app/core/` (`call_llm`, budget, ledger, cache, verifier, fetcher, embeddings) and the LangGraph setup, and its "Research the web" button runs a Phase 1 job and imports the verified sources into the notebook.
+
+**The core design idea:** every study feature is the same pipeline (plan → generate structured output → verify citations → save → render). A new feature is a Pydantic schema, a prompt and a renderer, not a new subsystem. This is what keeps 9 output types buildable in 6 weeks, and it's the architecture story for interviews.
+
+## 2. Scope
+
+**Core (v1)**
+- Accounts (email + password, JWT), notebooks owned by one user
+- Sources: PDF (text-layer and scanned), DOCX, PPTX, web URL, pasted text, Markdown/TXT
+- Page-routed ingestion: text layer, OCR, tables, figures; per-source and per-page status
+- Hybrid retrieval and grounded chat with streaming answers, clickable citations that open the highlighted passage, and refusal when the answer is not in the sources
+- Output pipeline with: briefing doc, FAQ, study guide, timeline, **flashcards** (with spaced-repetition review), **quiz** (multiple choice, scored), **mind map** (clickable)
+- Figure captions, so chart and diagram content is searchable
+- Pin any answer or output to notes; export notes as Markdown; export flashcards as CSV (Anki-compatible)
+- "Research the web": run a Phase 1 research job and import its verified sources into the notebook
+- Eval harness: parser, retrieval, grounding and output metrics
+- Docker Compose, CI, deployment, README with results
+
+**Stretch (in cut order, last one cut first)**
+- Audio overview: two-host script → text-to-speech → audio file with transcript
+- Video overview: narrated slides (script → slides with the document's own figures → TTS → MP4 with subtitles)
+- Page-image retrieval (ColQwen-style) for chart-heavy pages
+- Audio files as sources (faster-whisper transcription)
+
+**Out of scope (v1):** generative video models, real-time collaboration, sharing links, billing, mobile apps, Google Drive/YouTube import, interactive "join the podcast" audio, multilingual UI.
+
+## 3. Functional requirements
+
+| ID | Requirement |
+|---|---|
+| F1 | A user creates notebooks, adds sources, and lists or deletes them |
+| F2 | Each source moves through `uploaded → parsing → chunking → embedding → ready | failed`. Each page records its route (text / ocr / table / figure), parser and confidence |
+| F3 | Chat answers use only chunks from the notebook's ready sources. Retrieval never crosses notebooks |
+| F4 | Every factual sentence in an answer carries one or more citations: `source_id`, page, char span, exact quote |
+| F5 | Every citation's quote is an exact substring of the stored chunk text (deterministic check). Citations that fail are removed and counted |
+| F6 | If retrieval finds no supporting evidence, the answer is a refusal ("not in your sources") with the closest sources listed |
+| F7 | Clicking a citation opens the source viewer at that page with the passage highlighted. Citations from OCR'd pages also show the page image so the user can check the OCR |
+| F8 | Outputs (briefing, FAQ, study guide, timeline) are generated from the notebook's sources and saved. Each claim carries a citation |
+| F9 | **Flashcards:** a deck of question/answer cards, each answer cited. Users review cards and rate recall (again / hard / good / easy); the next review date follows a spaced-repetition schedule. Decks export as CSV |
+| F10 | **Quiz:** multiple-choice questions (4 options, 1 correct) with a cited explanation. The user's attempt is scored and stored; wrong answers link to the passage |
+| F11 | **Mind map:** a topic tree (3 levels max) where every leaf cites chunks. Clicking a node shows its citations and can start a chat about that topic |
+| F12 | Users can scope any output to selected sources, and pick a difficulty or length (e.g. 10/20/30 cards) |
+| F13 | Any answer or output can be pinned to notes; notes export as Markdown |
+| F14 | Every LLM, embedding, OCR and TTS call goes into the ledger (tokens, latency, cache hit, modeled cost) |
+| F15 | **Research the web:** a question runs a Phase 1 research job within the notebook's budget; its sources (snapshots, URLs, `fetched_at`) are imported as notebook sources, and the verified report is saved as a note |
+| F16 (stretch) | **Audio overview:** two-host script (5-8 minutes), each turn cited, then TTS, then one audio file with the transcript |
+| F17 (stretch) | **Video overview:** about 8-12 narrated slides; each slide has a title, 2-4 cited bullets and optionally a figure extracted from the sources; output is an MP4 with subtitles |
+
+## 4. Non-functional requirements
+
+- **Isolation:** every query filters by `notebook_id` and the owner's `user_id` at the SQL level, with a test that user B cannot read user A's chunks, notes, decks or media by ID.
+- **Idempotent ingest:** re-uploading the same file (same SHA-256) in the same notebook creates no new chunks.
+- **Streaming:** chat answers stream over Server-Sent Events. First token under 2 s on the local model.
+- **Bounded cost:** a per-notebook token budget (reuses CiteGuard's governor). Over budget, generation returns a clear message rather than failing silently.
+- **Resumable:** ingestion and output jobs run in arq; LangGraph checkpoints long jobs (audio, video), so a crash does not repeat finished steps.
+- **Reproducible:** raw files, page images and extracted text are stored, so a citation can be re-checked later.
+- **Observable:** every page's route and every output's verifier results are queryable ("which pages were OCR'd?", "how many flashcards were dropped and why?").
+
+## 5. Architecture
+
+```
+Browser (React + Vite + TypeScript)
+  │  3 panes: Sources | Chat | Studio (outputs, decks, quizzes, mind map, media, notes)
+  │  citation click → Source viewer (PDF page with highlight; page image for OCR'd pages)
+  ▼
+FastAPI (auth, notebooks, sources, chat SSE, outputs, reviews, quiz attempts, notes)
+  │
+  ├─► Postgres + pgvector + tsvector
+  ├─► MinIO / local volume (raw files, page images, figures, audio, video)
+  └─► Redis + arq worker
+          ├─ ingest_source:   Docling → page router → text / OCR / table / figure → chunk → embed → index
+          ├─ generate_output: the shared output graph (below), one job per output type
+          └─ render_media:    TTS per turn or slide → pydub / ffmpeg → MP3 or MP4 (stretch)
+```
+
+**Chat graph (LangGraph):** `classify → retrieve (hybrid) → rerank → answer (streamed, cites chunk IDs) → cite_check (exact substring) → verify (entailment, sampled) → respond | refuse`
+
+**Shared output graph (LangGraph):**
+```
+select_scope (sources, length, difficulty)
+  → plan       (topics with chunk IDs, from section summaries)
+  → generate   (per topic, structured output for the output type's schema)
+  → cite_check (every quote is an exact substring)
+  → verify     (entailment; type-specific checks, e.g. quiz distractors)
+  → repair     (one rewrite per failed item, then drop)
+  → dedupe     (embedding similarity, for cards and questions)
+  → save       → render (Markdown, deck, quiz, tree, MP3, MP4)
+```
+Each output type registers `{schema, prompts, extra_checks, renderer}`. The graph, verifier, ledger and budget are shared.
+
+**Hybrid retrieval:** pgvector cosine search plus Postgres full-text (`tsvector`), fused with reciprocal rank fusion. A local cross-encoder reranker (`bge-reranker-base`) is optional, and the eval decides whether it stays.
+
+**Framework rule:** same as CiteGuard. LangGraph only. No LangChain models, chains or retrievers. Every model call goes through `call_llm`.
+
+**Dev vs demo models:** develop and run evals against local Ollama (text and vision models) to avoid Groq quota. The deployed demo uses Groq with a per-notebook token cap. Results are reported for the local model, and the demo's model is stated in the README.
+
+## 6. Core component design
+
+### 6.1 Ingestion: page-routed parsing
+Docling is the single entry point for PDF, DOCX, PPTX, HTML and images. It keeps headings, reading order, tables and figure crops. PyMuPDF is used for fast text-layer checks and for rendering page images.
+
+| Page / element | Route | Notes |
+|---|---|---|
+| Page with a text layer | Docling text | Fast and exact; best for citations |
+| Scanned page (no text layer) | OCR: PaddleOCR by default; a vision OCR model for low-confidence pages | Vision OCR can invent numbers: store the page image, show it next to citations, flag low-confidence pages |
+| Table | Markdown table, kept as one chunk, plus a 1-2 line text summary | Never split a table across chunks |
+| Figure / chart / diagram | Cropped image saved; a vision model writes a caption that is indexed as text | The figure is also available to the video overview |
+| Audio source (stretch) | faster-whisper transcript with timestamps | Citations point to time ranges |
+
+- Every page stores `route`, `parser`, `confidence`, `ms`, so the parser eval and the debugging view are database queries.
+- Chunking follows structure (section, whole table, figure plus caption) with page and character offsets. Target about 350 tokens, 15% overlap for prose.
+- Contextual header per chunk: one line naming the document and section, added before embedding.
+- Hierarchical summaries (chunk → section → source) are stored once and reused by every output's plan step.
+
+### 6.2 Grounded answering
+- The answer prompt receives numbered chunks with IDs and must cite by ID. Structured output: `[{sentence, chunk_ids, quote}]`.
+- `cite_check` (deterministic): each quote must be an exact substring of its chunk after NFKC and whitespace normalization. Failing citations are dropped; a sentence left without a citation is dropped.
+- `verify` (LLM, sampled at 30% in the demo to save quota; always on in eval): a different model family checks each sentence against its quote.
+- Refusal: if the top reranked score is below a threshold, or verification removes everything, respond with a refusal and the nearest sources.
+
+### 6.3 Reports: briefing, FAQ, study guide, timeline
+- Map-reduce over the stored summaries. Every claim keeps its chunk IDs through both steps.
+- Timeline: `[{date, event, chunk_ids}]`, sorted, rendered as a table.
+
+### 6.4 Flashcards with spaced repetition
+- Schema: `{front, back, chunk_ids, quote, difficulty, topic}`. The back must be supported by the quote (cite_check + verify).
+- Extra checks: the front must not contain the answer; near-duplicate fronts (cosine > 0.9) are merged; card count matches the requested length within ±10%.
+- Review scheduling: SM-2 (about 30 lines; FSRS is the upgrade path). Each review stores the rating; `due_at`, `interval_days` and `ease` are updated. A "due today" view shows the cards to review.
+- Export: CSV with front, back and source reference, importable into Anki.
+
+### 6.5 Quizzes
+- Schema: `{question, options[4], correct_index, explanation, chunk_ids, quote, difficulty}`.
+- Extra checks, which make this more than a prompt:
+  - The correct option must be **supported** by the quote (verifier).
+  - Each distractor must be **not supported** by the quote (verifier run on each), so no question has two right answers.
+  - Options are shuffled in code, not by the model, so the correct answer isn't always in the same position.
+- Attempts store each answer and the score. Wrong answers link to the cited passage.
+
+### 6.6 Mind map
+- Schema: a tree `{label, children[], chunk_ids}`, at most 3 levels and about 7 children per node, built from the section summaries.
+- Leaves must cite chunks; interior nodes inherit citations from their children.
+- Rendered as an interactive tree (`markmap` or React Flow). Clicking a node shows its citations and can open chat pre-filled with "Explain <topic>".
+
+### 6.7 Audio overview (stretch)
+- Outline (4-6 topics with chunk IDs) → two-host script (`Alex`, `Sam`), each turn cited → verify (unsupported turns rewritten once, then removed).
+- TTS per turn with two voices: Piper or Kokoro locally (free); a hosted voice for the demo if credits allow. `pydub` + ffmpeg join the turns with short pauses.
+- Saved as MP3 plus a transcript whose lines link to citations.
+
+### 6.8 Video overview (stretch): narrated slides, not generated video
+- Script → slide spec `[{title, bullets[], chunk_ids, figure_id?, narration}]`. Bullets and narration are verified like everything else.
+- Slides are rendered from an HTML template to PNG with Playwright, using the document's own extracted figures where relevant. This is where multimodal ingestion pays off visibly.
+- TTS per slide → ffmpeg joins images and audio into an MP4, with an SRT subtitle file generated from the narration.
+- No generative video models: they cost more, are slow, and would invent visuals that the verifier can't check.
+
+### 6.9 Auth and isolation
+- Email + password (bcrypt), JWT access token. Single-owner notebooks in v1.
+- Every repository function takes `user_id`. A route-level test covers each endpoint with two users.
+
+## 7. Data model
+
+| Table | Key columns |
+|---|---|
+| `users` | id, email, password_hash, created_at |
+| `notebooks` | id, user_id, title, token_budget, tokens_used, created_at |
+| `sources` | id, notebook_id, kind (pdf/docx/pptx/url/text/audio), title, url, sha256, status, error, raw_path, fetched_at |
+| `pages` | id, source_id, page_no, route (text/ocr/mixed), parser, confidence, image_path, parse_ms |
+| `figures` | id, page_id, image_path, bbox, caption, caption_model |
+| `chunks` | id, source_id, notebook_id, page_id, kind (prose/table/figure_caption/transcript), char_start, char_end, text, context_header, tsv (generated), embedding `vector(384)` |
+| `summaries` | id, source_id, level (chunk/section/source), ref_id, text, chunk_ids |
+| `chat_messages` | id, notebook_id, role, content, refused, created_at |
+| `citations` | id, owner_type (message/output_item), owner_id, chunk_id, quote, verified |
+| `outputs` | id, notebook_id, type (briefing/faq/guide/timeline/flashcards/quiz/mindmap/audio/video), params_json, status, content_json, media_path, transcript, items_generated, items_dropped, created_at |
+| `flashcards` | id, output_id, front, back, chunk_ids, difficulty |
+| `card_reviews` | id, flashcard_id, user_id, rating, reviewed_at, interval_days, ease, due_at |
+| `quiz_questions` | id, output_id, question, options_json, correct_index, explanation, chunk_ids |
+| `quiz_attempts` | id, output_id, user_id, answers_json, score, created_at |
+| `notes` | id, notebook_id, origin_type, origin_id, content_md, created_at |
+| `ledger` | id, notebook_id, phase, kind, model, tokens_in, tokens_out, cost_usd_modeled, cache_hit, latency_ms, created_at |
+
+Indexes: HNSW on `chunks.embedding`, GIN on `chunks.tsv`, btree on `notebook_id` everywhere, `(user_id, due_at)` on `card_reviews`.
+
+## 8. API
+
+```
+POST   /auth/register, /auth/login
+GET    /notebooks                         POST /notebooks          DELETE /notebooks/{id}
+POST   /notebooks/{id}/sources            (multipart file, or {"url": ...}, or {"text": ...})
+GET    /notebooks/{id}/sources            → statuses, page routes
+DELETE /sources/{id}
+GET    /sources/{id}/pages/{n}            → text, route, confidence, image URL
+POST   /notebooks/{id}/chat               (SSE stream: tokens, then citations, then done)
+GET    /chunks/{id}                       → text, page, offsets, source title (for the viewer)
+
+POST   /notebooks/{id}/outputs            {"type": ..., "source_ids": [...], "length": ..., "difficulty": ...}
+GET    /outputs/{id}                      → status, content, media URL, transcript, items_generated/dropped
+GET    /outputs/{id}/export               → .md (reports), .csv (flashcards), .mp3 / .mp4 (media)
+
+GET    /notebooks/{id}/flashcards/due     → cards due today
+POST   /flashcards/{id}/review            {"rating": "again" | "hard" | "good" | "easy"}
+POST   /outputs/{id}/attempts             {"answers": [...]} → score, per-question feedback with citations
+
+POST   /notes                             {"origin_type", "origin_id"}  (pin)
+GET    /notebooks/{id}/notes/export.md
+GET    /notebooks/{id}/ledger
+```
+
+## 9. Evaluation plan
+
+### 9.0 Test set (week 1, before chat exists)
+- 6 notebooks, 2-4 documents each, chosen to include scanned pages, tables and charts.
+- About 60 questions: direct lookup, multi-hop, summary, comparison, **table-only**, **chart-only**, and **unanswerable** (about 8).
+- Gold answers are marked by **page and character span, not chunk ID**, so different chunking strategies can be compared fairly.
+- Parser gold: 20-30 pages hand-transcribed (scanned) or with tables checked cell by cell.
+
+### 9.1 Metrics
+
+| Layer | Metric | Target / note |
+|---|---|---|
+| Parsing | Character error rate on scanned pages, per OCR route | report per parser |
+| Parsing | Table cell accuracy | report |
+| Retrieval | Recall@5, MRR, broken down by question type (text, table, chart, scanned) | compare configs (9.2) |
+| Chat | Citation validity (exact substring) | 100%; any failure is a bug |
+| Chat | Faithfulness: sentences supported by their quote (LLM judge, different family) | report with judge-human agreement (Cohen's kappa) on 50 items |
+| Chat | Refusal accuracy on unanswerable questions | report |
+| Flashcards | Card validity (back supported by quote), answer-leak rate, duplicate rate, coverage (% of sections with ≥1 card) | report; human rating 1-5 on 40 cards |
+| Quiz | Answer-key correctness (correct option supported), ambiguity rate (a distractor also supported), position balance of correct answers | report; human check of 30 questions |
+| Mind map | Leaf citation validity, coverage of section headings | report |
+| Reports | Claim faithfulness on briefing and study guide | report |
+| Pipeline | Items dropped by the verifier per output type, and why | report; shows the verifier doing work |
+| System | Latency (chat first token, per-page ingest, per-output generation), tokens and modeled cost per output | median and p95 |
+| Security | Cross-user access attempts blocked | 100% |
+| Media (stretch) | 10 audio and 5 video overviews rated by two people on accuracy, coherence and engagement | report with n stated |
+
+### 9.2 Ablations (one change at a time, one row each)
+
+| Config | Change |
+|---|---|
+| 1 | Dense only, fixed-size chunks, text-layer only (baseline) |
+| 2 | + structure-aware chunking |
+| 3 | + OCR route for scanned pages |
+| 4 | + tables as Markdown chunks |
+| 5 | + figure captions |
+| 6 | + hybrid search with rank fusion |
+| 7 | + reranker |
+| 8 | + contextual headers |
+| 9 (stretch) | + page-image retrieval on visual pages |
+
+Plus: verifier on vs off for flashcards and quizzes (validity and ambiguity rates). Report what you measure, including configs that did not help.
+
+## 10. Tech stack
+
+| Layer | Choice |
+|---|---|
+| Backend | Python 3.12 (`uv`), FastAPI, Pydantic v2 |
+| Orchestration | LangGraph + Postgres checkpointer (no LangChain models, chains or retrievers) |
+| Database | Postgres 16 + pgvector + tsvector |
+| ORM / migrations | SQLAlchemy 2.0 async, Alembic |
+| Queue | Redis + arq |
+| Storage | MinIO (S3-compatible) in compose; local volume in dev |
+| Parsing | Docling (PDF, DOCX, PPTX, HTML, images); PyMuPDF (text-layer check, page images); `trafilatura` + `httpx` for URLs (SSRF-safe fetcher from CiteGuard) |
+| OCR | PaddleOCR by default; a vision OCR model for low-confidence pages |
+| Vision | Ollama vision model for figure captions (dev); check Groq's model list before the demo depends on one |
+| Embeddings / rerank | `sentence-transformers`: bge-small-en-v1.5 (384 dims), bge-reranker-base (optional) |
+| LLMs | Ollama locally (dev, eval); Groq free tier for the demo; two model families (generation and verification) |
+| Spaced repetition | SM-2, written in-house (FSRS as the upgrade path) |
+| Mind map | `markmap` or React Flow |
+| Media (stretch) | Piper or Kokoro TTS (local); Playwright for slide rendering; `pydub` + ffmpeg for audio and video; faster-whisper for audio sources |
+| Auth | `passlib[bcrypt]`, `pyjwt` |
+| Frontend | React 18 + Vite + TypeScript, Tailwind, `react-pdf` for the viewer |
+| Testing | pytest, pytest-asyncio, Playwright (end-to-end flows), ruff, mypy |
+| CI / infra | GitHub Actions, Docker Compose |
+| Deploy | Render or Railway (API + worker); Vercel or Netlify (frontend) |
+
+## 11. Timeline (6 weeks, after Phase 1, 2026-12-04 → 2027-01-15)
+
+The roadmap (`04_notebook_roadmap.txt`) has the day-by-day breakdown. Summary:
+
+| Week | Dates | Goal | Exit check |
+|---|---|---|---|
+| 1 | Dec 4-10 | Compose, auth, notebooks; Docling ingestion with page router (text, OCR, tables); page images; test set and parser gold | Parser metrics measured; config 1-4 Recall@5 measured |
+| 2 | Dec 11-17 | Figure captions, hybrid retrieval, reranker; grounded chat with SSE, cite_check, verify, refusal; citation viewer with highlight | Citation validity 100%; configs 5-8 measured; refusal accuracy measured |
+| 3 | Dec 18-24 | Shared output graph; briefing, FAQ, study guide, timeline; flashcards with SM-2 review and CSV export | Card validity, leak and duplicate rates measured |
+| 4 | Dec 25-31 | Quiz with distractor checks and scoring; mind map; notes and export; frontend Studio pane | Quiz ambiguity rate measured; mind map rendered with citations |
+| 5 | Jan 1-7 | Stretch: audio overview, then video overview (both reuse the output graph and TTS) | Generated media rated, or cut and noted |
+| 6 | Jan 8-15 | "Research the web" import, deploy, CI, Playwright flows, isolation tests, results tables, README, demo video, write-up | Definition of done (section 13) ticked |
+
+Week 4 includes the holiday. Week 5 is all stretch, so slipping there costs nothing in the core.
+
+**Cut order if you slip:** video overview → audio overview → page-image retrieval → mind map → timeline output → reranker → web-research import (Phase 1 still stands alone). Never cut: citation validity check, isolation tests, flashcards and quiz with their verifier checks, the eval.
+
+## 12. Risks and mitigations
+
+| Risk | Mitigation |
+|---|---|
+| Scope creep (NotebookLM is a large product) | Every feature is a schema on the shared output graph; the stretch list and cut order are fixed |
+| Vision OCR inventing numbers | Store page images, show them next to OCR citations, flag low-confidence pages, measure CER per route |
+| Docling slow on large PDFs | Ingest in the worker with per-page progress; cap pages per source in the demo |
+| Quiz questions with two right answers | Verifier checks every distractor is unsupported; ambiguity rate is a reported metric |
+| Flashcards that give away the answer | Answer-leak check on every card; leak rate reported |
+| Groq quota during eval | Eval runs on local Ollama; demo uses a per-notebook token cap |
+| No GPU for page-image retrieval or vision OCR | Keep them as stretch or low-confidence-only routes; use a free Colab GPU for indexing if needed |
+| Media pipelines eat the schedule | Audio and video are stretch in week 5, and both reuse the output graph |
+| Frontend time | Three plain panes with Tailwind defaults; the viewer and Studio pane get the polish |
+| Two projects at once | CiteGuard finishes first (Dec 3); this project starts Dec 4 |
+
+## 13. Definition of done
+
+- [ ] Multi-user accounts, notebooks, and ingest for PDF (text and scanned), DOCX, PPTX, URL and text, with per-page routes visible
+- [ ] Grounded chat with streamed answers, exact-substring citation check (100% valid), refusal on unanswerable questions
+- [ ] Citation click opens the highlighted passage; OCR'd citations show the page image
+- [ ] Shared output graph producing briefing, FAQ, study guide, timeline, flashcards, quiz and mind map, all with verified citations
+- [ ] Flashcard review with spaced repetition and CSV export; quiz attempts scored with linked explanations
+- [ ] "Research the web" imports a Phase 1 job's verified sources and report into a notebook
+- [ ] Isolation tests pass: user B cannot access user A's data by ID
+- [ ] Eval: parser metrics, Recall@5 ablation table by question type, faithfulness with judge agreement, refusal accuracy, flashcard and quiz quality metrics, latency, cost
+- [ ] Docker Compose one-command setup, CI green, Playwright end-to-end flows
+- [ ] Live demo link and README (architecture, results tables, limitations)
+- [ ] Write-up post published
+- [ ] (Stretch) audio overview and video overview generated and rated
+
+## 14. Resume bullets (fill after measuring)
+
+- Built a source-grounded study notebook (FastAPI, LangGraph, Postgres/pgvector, React) where chat, reports, flashcards, quizzes and mind maps cite exact passages; citation validity **100%** on **N** items, faithfulness **F%** (judge-human κ = **K**).
+- Designed page-routed multimodal ingestion (Docling, PaddleOCR, vision captions for figures) and measured it in a 9-step ablation; Recall@5 on table and chart questions rose from **X%** to **Y%**, at **Z ms/page**.
+- Built one verified generation pipeline that serves 7+ output types; its checks dropped **D%** of generated flashcards and quiz questions (answer leaks, ambiguous distractors, unsupported claims), with quiz ambiguity measured at **A%**.
+- Implemented spaced-repetition review (SM-2) and scored quizzes, plus per-user data isolation enforced at the query layer and covered by tests.
+- (Stretch) Generated narrated slide videos and two-host audio overviews from the user's sources, using the documents' own figures, with every narrated line verified.
+
+**Interview questions to prepare for:** why route pages instead of using one parser; how you catch OCR errors the verifier can't see; why exact-substring citation checks; why gold labels are page spans, not chunk IDs; how RRF works and when dense search alone fails; how you guarantee a quiz has exactly one right answer; why narrated slides instead of a generative video model; how SM-2 schedules a card; how you prevent cross-notebook leakage; how you'd scale ingestion.

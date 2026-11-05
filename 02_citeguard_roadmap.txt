@@ -1,0 +1,168 @@
+# CiteGuard Research: Roadmap (Phase 1, 2026-11-06 → 2026-12-03)
+
+Spec: `01_citeguard_spec.txt`. Vision: `00_VISION.txt`. This file is the build order. Phase 2 starts Dec 4 (`04_notebook_roadmap.txt`).
+
+**Reuse rule:** `call_llm`, budget, ledger, cache, verifier, fetcher and embeddings go in `app/core/` from day one, with no research-specific imports, because Phase 2 reuses them unchanged.
+
+What changed from v1:
+- The verifier is built and measured in week 1 against its own test set. The eval is no longer saved for the last week.
+- The budget is in tokens, time and rate limits (Groq free tier: 8K TPM / 200K TPD per model). USD is reported as modeled cost only.
+- Every LLM call is disk-cached, and configs B and C share one shadow-mode run, so the eval fits the free-tier quota.
+- Embeddings are local (bge-small, 384 dims).
+- Orchestration uses LangGraph with a Postgres checkpointer (crash-resume for free). LangChain models, chains and retrievers are not used, so every LLM call still goes through `call_llm`.
+- New: an MCP `research` tool, a gallery of cached reports, a write-up post, and a stretch goal to fine-tune a local verifier.
+
+```
+Week 1: Verifier first     Week 2: Pipeline         Week 3: Proof            Week 4: Visibility
+• Fix scaffold             • Plan/search/fetch      • Run A/B/C              • CI + deploy
+• call_llm + governor      • Writer + verify loop   • Label + kappa          • MCP tool
+• Verifier test set        • single/multi, resume   • Metrics table          • Gallery + README
+• Verifier P/R measured    • Partial reports        • Fine-tune (stretch)    • Blog post + video
+```
+
+---
+
+## Week 1 (Nov 6-12): Foundation + verifier
+
+**Goal:** the core of the project works and has a number attached before any pipeline exists.
+
+**D1: Fix the scaffold**
+- `app/main.py`: add the missing `from sqlalchemy import text` (`/health` currently raises NameError).
+- `pyproject.toml`: name `citeguard`, `requires-python = ">=3.12"`, real dependencies (fastapi, uvicorn, sqlalchemy[asyncio], asyncpg, pgvector, alembic, arq, httpx, trafilatura, rapidfuzz, pydantic, sentence-transformers, groq, langgraph, langgraph-checkpoint-postgres, mcp, pytest, pytest-asyncio, ruff). No langchain-* model packages.
+- Move `docker-compose.yml` to the project root and add the app and worker services.
+- Bring `models.py` up to spec section 7: `jobs.stage` and `deadline_at`, `max_usd → max_tokens`; `sources.domain` and `fetched_at`; `ledger.phase`, `latency_ms`, `cache_hit` and `cost_usd_modeled`; `claims.subq_id`, `entailment_reason`, `rewrite_count`, `confidence` and `shadow_verdict`; a `conflicts` table; a `verifier_testset` table; `Vector(384)`.
+- Alembic init plus the first migration. Replace `create_all` in the lifespan hook with migrations.
+
+**D2: `call_llm` wrapper (the single gate)**
+- Signature: `call_llm(scope, phase, model, messages, max_tokens, schema=None)`, where `scope` is `("job", id)` now and `("notebook", id)` in Phase 2. The ledger stores `scope_type` and `scope_id` instead of a hard `job_id`.
+- Steps: estimate tokens → check the phase cap and the job cap → check the per-model TPM/TPD sliding window (wait, or raise if the wait would pass the deadline) → disk cache lookup → call Groq → validate with Pydantic (one retry) → write the ledger row (tokens, modeled USD, latency, cache_hit).
+- Tests: cap math, cache hit costs 0, `BudgetExceededError` raised before the provider is called, rate-window behavior with a fake clock.
+- Measure: tokens for one realistic writer call and one verifier call. This replaces the "~40-50K tokens per report" guess.
+
+**D3-D4: Verifier test set (~150 pairs)**
+- Collect 30-40 real quotes from real pages, in one domain you can judge quickly.
+- For each quote, write one faithful claim plus 3-4 perturbations: number or date changed, overgeneralized, wrong entity or time period, correlation turned into causation.
+- Label each pair (`supports / partial / unsupported`) and its perturbation type. Store as CSV and load into `verifier_testset`.
+- Optional: add a slice of a public fact-verification set (e.g. SciFact) as an out-of-domain check.
+
+**D5-D6: Verifier** (in `app/core/`; Phase 2 uses it for chat, flashcards and quizzes)
+- Check 1: NFKC, whitespace collapse, lowercase, normalized quotes and dashes, then `quote in snapshot`, then a `rapidfuzz.partial_ratio ≥ 95` fallback.
+- Check 2: an entailment prompt on a different model family from the writer. It sees only the claim, the quote and about one paragraph of context. Output: `{verdict, reason}`.
+- `scripts/eval_verifier.py` prints precision and recall on `unsupported`, overall and per perturbation type.
+- Iterate on the prompt against the test set. Keep a log of prompt versions and their scores.
+
+**D7: Buffer + CI skeleton**
+- GitHub Actions: ruff + pytest + `eval_verifier.py` on a cached subset (no live API calls in CI).
+
+**Exit check:** you can say "the verifier catches X% of unsupported claims with Y% false alarms on 150 test pairs."
+
+---
+
+## Week 2 (Nov 13-19): End-to-end pipeline
+
+**Goal:** a real question goes in, a verified report comes out, within budget.
+
+**D8: Planner + search**
+- Planner: question → 4-8 sub-questions (Pydantic-validated), saved to `subquestions`.
+- Search: Tavily or Brave, top N URLs per sub-question.
+
+**D9: Fetcher + evidence store**
+- SSRF-safe fetcher: resolve DNS and reject private, loopback, link-local and metadata IPs; allow only http/https; recheck after redirects; 8 s timeout; 2 MB cap; retry with backoff; skip 403s and paywalls.
+- `trafilatura` → snapshot → SHA-256 dedupe per job → `domain` and `fetched_at`.
+- Chunking (300-500 tokens, with overlap) → bge-small embeddings → pgvector HNSW index.
+- Wrap fetched text in delimiters and tell the model that the page content is data, not instructions.
+
+**D10: Writer**
+- Retrieve top-k chunks per sub-question → `[{claim, source_id, exact_quote}]`, about 12-15 claims per report.
+
+**D11: Verify loop + shadow mode**
+- Wire the week-1 verifier in: keep, rewrite once, or drop. Dropped claims go into the report with their reasons.
+- `shadow=True` records verdicts without changing the report. This is how configs B and C come from one run.
+
+**D12: LangGraph orchestration + single vs multi + workers**
+- Wrap D8-D11 as nodes in a `StateGraph`: plan → research (fan-out with `Send`) → write → verify ⇄ rewrite (max 1) → analyze → render.
+- Add a `budget_check` conditional edge before each node: over cap → render with status `partial`.
+- Every node calls `call_llm`. Add a test that fails if any module imports a LangChain chat model.
+- Compile with the Postgres checkpointer, `thread_id = job_id`. The arq task just invokes the graph.
+- Resume test: kill the worker mid-research, restart, re-invoke with the same `thread_id`; assert the ledger shows no repeated calls for completed nodes.
+- Single mode: all sub-questions, sequentially, in one shared context (not `sqs[:1]`).
+- Multi mode: one arq task per sub-question, running in parallel.
+- Each node writes `jobs.stage` for the status API. Enqueueing is idempotent per `job_id`.
+
+**D13: Budget hardening**
+- Phase caps: research 50%, writing 15%, verify 25%, reserve 10%.
+- When the research cap is hit, remaining sub-questions become `skipped_budget` and the job moves on to writing.
+- When the hard cap or deadline is hit, the job ends as `partial`. Unverified claims are always dropped and listed, never shipped.
+- `POST /jobs/{id}/cancel`.
+
+**D14: Report renderer + API**
+- Report sections: summary, findings with numbered citations, disagreements, gaps and low-confidence claims, dropped claims, references, run metadata.
+- Endpoints: `/jobs/{id}/report`, `/claims`, `/ledger`, `/export/claims.csv`, `POST /labels`.
+- Integration test: a tiny-budget job ends `partial` with zero unverified claims.
+
+**Exit check:** one full multi-mode report generated, and the tiny-budget test passes.
+
+---
+
+## Week 3 (Nov 20-26): Proof
+
+**Goal:** a results table full of measured numbers.
+
+**D15: Benchmark questions**
+- 12-15 questions: factual synthesis, comparisons, 2-3 contested topics, 2 thin-evidence topics.
+- Start the runs: config A (single, verifier off) and B+C (multi, shadow mode). Spread them across days to stay inside the quota; the cache makes re-runs free.
+
+**D16-D18: Labeling**
+- Label every draft claim from B/C (about 200) and the claims from A on about 8 questions. Label rewritten claims too.
+- Have a second person label 40 claims, then compute Cohen's kappa.
+- Meanwhile: simple conflict detection (high-similarity claim pairs from different domains → contradiction check) and confidence scores (high / medium / low).
+
+**D19: Metrics script**
+- `scripts/eval_report.py` → results table: unsupported rate before and after, citation precision, catch rate, false-drop rate, retention, median and p95 tokens / modeled USD / minutes, budget adherence, single vs multi.
+- Charts: unsupported rate before vs after, and the cost vs accuracy trade-off.
+
+**D20-D21: Stretch: fine-tuned verifier (timebox to 2 days)**
+- Fine-tune a small NLI cross-encoder (DeBERTa-class) on the test set plus labeled claims, with a held-out split.
+- Config E: swap it in as check 2 and compare catch rate, false-drop rate, latency and cost against the LLM judge.
+- Report the result either way.
+
+**Exit check:** section 9 metrics are all filled in from real runs.
+
+---
+
+## Week 4 (Nov 27-Dec 3): Visibility
+
+**Goal:** someone outside can see it, try it, and understand it in 2 minutes.
+
+**D22: CI + deploy**
+- CI green: ruff, pytest, cached verifier eval.
+- Deploy the API and worker (Railway, Render or Fly) with managed Postgres and Redis. The live endpoint gets a small default budget.
+
+**D23: MCP tool**
+- A `research(question, max_tokens, max_minutes)` tool using the official `mcp` SDK. It calls the API and returns the report plus claim JSON.
+- Test it from Claude Desktop or Cursor and record a 20-second clip.
+
+**D24: Report gallery**
+- A static page with about 10 cached reports. Each claim shows its quote, source link, verdict, and dropped/rewritten status. This is the main demo, because it is immune to rate limits.
+
+**D25-D26: README**
+- Problem → architecture diagram → results table → budget proof (tiny-budget run) → design trade-offs (why a separate verifier model, why tokens rather than USD, snapshots vs live pages) → limitations → one-command setup.
+
+**D27: Write-up post**
+- "How often do LLM research citations lie? I measured it." Method, numbers, failure examples, what the verifier misses.
+
+**D28: Demo video + resume**
+- 2-minute video: a live run, the tiny-budget partial run, a kill-and-resume run, the gallery and the MCP call.
+- Fill in the resume bullets in `01_citeguard_spec.txt` section 15 with the measured numbers only.
+
+**Exit check:** every box in `01_citeguard_spec.txt` section 16 is ticked.
+
+---
+
+## Cut order if you slip
+1. Configs D and E (fine-tuned verifier)
+2. Conflict detection (keep confidence)
+3. Gallery polish (a plain list of report links is fine)
+4. Blog post moves to the week after
+
+Never cut: the verifier test set, the labeled eval, the budget guarantee.
