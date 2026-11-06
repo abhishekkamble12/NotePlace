@@ -76,7 +76,7 @@ def normalize_with_map(text: str) -> tuple[str, list[int], list[int]]:
     starts: list[int] = []
     ends: list[int] = []
     for s, e, cl in _clusters(text or ""):
-        for ch in unicodedata.normalize("NFKC", cl).lower().translate(_PUNCT):
+        for ch in unicodedata.normalize("NFKC", unicodedata.normalize("NFKC", cl).lower()).translate(_PUNCT):  # 2nd NFKC: lower() can emit marks out of canonical order
             if ch.isspace():
                 if not out or out[-1] == " ":
                     if out:

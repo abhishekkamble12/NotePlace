@@ -91,3 +91,12 @@ def test_fullwidth_digits_fold_to_ascii_via_nfkc(whole, frac):
     fullwidth = "".join(chr(ord(c) + 0xFEE0) if c.isdigit() else c for c in ascii_num)
     assert fullwidth != ascii_num
     assert normalize_text(f"rose {fullwidth}%") == f"rose {ascii_num}%"
+
+
+def test_regression_dotted_capital_i_with_combining_mark_is_idempotent_and_findable():
+    """Found by Hypothesis under randomized seeds: U+0130 lowercases to i + U+0307 AFTER NFKC, leaving combining marks
+    out of canonical order, so a quote copied from the normalized snapshot normalized differently the second time."""
+    snap = "00000\u0130\u05ad"
+    once = normalize_text(snap)
+    assert normalize_text(once) == once
+    assert locate_quote(once, snap) is not None
