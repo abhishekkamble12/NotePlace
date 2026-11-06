@@ -61,13 +61,11 @@ Full numbers, data provenance and reproduction commands: [RESULTS.md](RESULTS.md
 | Real pipeline runs | 10/10 jobs, 142 LLM calls, $0.126 modeled total, per-call p50 1.18 s / p95 2.34 s | 10 live questions |
 | Precision / recall / kappa on real claims | **not measured**: 116 claims await human labels | `evals/real/*_label_sheet.csv` |
 
-`evals/synthetic_labeled_claims.csv` and `gallery/` are **synthetic**: hand-written examples that show the data shape, not outputs of the pipeline.
-
 ---
 
 ## 3. Planned, not built
 
-- Redis/arq job queue: `app/worker.py` and the compose `worker` service exist, but nothing enqueues jobs to them.
+- A job queue (jobs run as FastAPI background tasks in the API process today).
 - Postgres LangGraph checkpointer (the graph uses `MemorySaver`, so a process crash loses graph state; only some nodes re-read the DB to skip finished work).
 - Vector retrieval of top-k chunks per sub-question.
 - A real difference between `single` and `multi` modes (today only `shadow` changes behavior).
@@ -105,19 +103,13 @@ Tools: `research(question, max_tokens=60000, max_minutes=8, mode="multi")` and `
 
 ---
 
-## 6. Synthetic demo gallery
-
-`gallery/index.html` shows 10 hand-written example reports. They are not pipeline output and carry no measurements. Served by the API at `/gallery`.
-
----
-
-## 7. Quickstart
+## 6. Quickstart
 
 Prerequisites: Python 3.12+, Docker, a Groq API key.
 
 ```bash
 cd Research_notebook_project
-docker compose up -d        # Postgres+pgvector and Redis (the worker service is currently idle)
+docker compose up -d        # Postgres + pgvector
 uv sync
 uv run alembic upgrade head
 uv run pytest -v
@@ -125,11 +117,11 @@ uv run ruff check .
 uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-`scripts/eval_verifier.py` calls the live Groq API on the hand-written 175-pair set. Its output is not credible evidence (see AUDIT.md).
+Reproduce the numbers: see [RESULTS.md](RESULTS.md).
 
 ---
 
-## 8. Status
+## 7. Status
 
 - [x] `call_llm` gateway with token budget, ledger, in-process TPM limiter, disk cache
 - [x] SSRF IP/scheme checks in the fetcher

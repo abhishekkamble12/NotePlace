@@ -2,7 +2,7 @@
 
 You see a CLAIM and the EVIDENCE span it cites. Decide only whether the evidence supports the claim. Use **no outside knowledge**, do not infer facts the span does not state, and do not look at any model output. "Supports" means *attributed to the evidence*, not *true*.
 
-Files: one CSV per annotator (`evals/annotation_template.csv` columns). Never edit another annotator's file. Disagreements go to a separate adjudicated file with `adjudication_status=adjudicated` and a note. Validate with `python scripts/annotation.py validate FILE.csv`; compare with `python scripts/annotation.py agree A.csv B.csv`.
+Files: build the blind sheet with `python scripts/make_label_sheet.py dev|test`, copy it once per annotator, fill `label` and `annotator`, and never edit another annotator's copy. Rows with `kappa_subset=1` are labeled by both; compare with `python scripts/cohens_kappa.py A.csv B.csv`.
 
 ## Labels
 
@@ -13,7 +13,7 @@ Files: one CSV per annotator (`evals/annotation_template.csv` columns). Never ed
 | `unsupported` | The evidence contradicts the claim, or does not give enough to support it (different number/date/entity, negation flipped, topic absent). |
 
 Decision order: (1) contradicted or not addressed -> `unsupported`; (2) everything in the claim is covered -> `supports`; (3) otherwise `partial`.
-**Absence is not falsehood.** Record the distinction in `annotation_notes` as `contradicted` or `not_stated`; both are `unsupported`. If the claim is ambiguous, pick the reading a careful reader would take, label it, and add `ambiguous` to the notes (category `ambiguous`).
+**Absence is not falsehood.** Record the distinction in `notes` as `contradicted` or `not_stated`; both are `unsupported`. If the claim is ambiguous, pick the reading a careful reader would take, label it, and add `ambiguous` to the notes (category `ambiguous`).
 
 ## Worked examples (E = evidence, C = claim)
 

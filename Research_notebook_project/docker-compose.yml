@@ -15,45 +15,5 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  app:
-    build: .
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
-    ports:
-      - "8000:8000"
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://citeguard:citeguard_password@postgres:5432/citeguard
-      - REDIS_URL=redis://redis:6379
-      - GROQ_API_KEY=${GROQ_API_KEY}
-      - CITEGUARD_EVIDENCE_HMAC_KEY=${CITEGUARD_EVIDENCE_HMAC_KEY:?set CITEGUARD_EVIDENCE_HMAC_KEY in .env}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
-  worker:
-    build: .
-    command: python -m arq app.worker.WorkerSettings
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://citeguard:citeguard_password@postgres:5432/citeguard
-      - REDIS_URL=redis://redis:6379
-      - GROQ_API_KEY=${GROQ_API_KEY}
-      - CITEGUARD_EVIDENCE_HMAC_KEY=${CITEGUARD_EVIDENCE_HMAC_KEY:?set CITEGUARD_EVIDENCE_HMAC_KEY in .env}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
 volumes:
   pgdata:

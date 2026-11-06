@@ -9,6 +9,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Research_notebook_project
     steps:
       - uses: actions/checkout@v4
 
@@ -32,4 +35,4 @@ jobs:
 
       - name: Run pytest
         run: |
-          pytest -v
+          python -m pytest -v

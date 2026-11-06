@@ -2,7 +2,6 @@
 import csv
 import io
 from contextlib import asynccontextmanager
-from pathlib import Path
 from typing import Literal
 
 from fastapi import (
@@ -17,7 +16,6 @@ from fastapi import (
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.staticfiles import StaticFiles
 
 from app.core.accounting import ledger_summary
 from app.core.verifier import require_evidence_key
@@ -40,10 +38,6 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Mount static report gallery
-gallery_path = Path(__file__).resolve().parents[1] / "gallery"
-if gallery_path.exists():
-    app.mount("/gallery", StaticFiles(directory=str(gallery_path), html=True), name="gallery")
 
 class ResearchRequest(BaseModel):
     question: str = Field(min_length=5, description="The research question to investigate")

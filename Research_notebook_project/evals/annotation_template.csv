@@ -1,2 +1,0 @@
-pair_id,source_document_id,source_url,source_date,claim,evidence,expected_label,category,annotator_id,annotation_notes,adjudication_status
-EXAMPLE-1,doc-001,https://example.com/article,2024-05-01,(claim sentence to judge),(verbatim source span; use only this text),,paraphrase,annotator_A,(optional: why; note contradiction vs. missing),none
