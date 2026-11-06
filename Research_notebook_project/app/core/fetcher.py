@@ -123,6 +123,7 @@ async def fetch_url_snapshot(url: str) -> tuple[str, str, str]:
         clean_text = re.sub(r"<[^>]+>", " ", raw_html)
         clean_text = re.sub(r"\s+", " ", clean_text).strip()
 
+    clean_text = clean_text.replace(chr(0), "")  # PDF text with NUL bytes made the Postgres insert fail
     content_hash = hashlib.sha256(clean_text.encode("utf-8")).hexdigest()
     return domain, content_hash, clean_text
 
@@ -193,6 +194,11 @@ async def store_evidence_source(
         snapshot=snapshot
     )
     db.add(source)
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception as e:
+        await db.rollback()  # otherwise the shared session stays poisoned for later sources
+        print(f"Failed to store {url}: {type(e).__name__}")
+        return None
     await db.refresh(source)
     return source

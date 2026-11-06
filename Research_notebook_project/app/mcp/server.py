@@ -136,7 +136,7 @@ async def verify_quote(
             claim_text=claim,
             quote=quote,
             snapshot=context or quote,
-            verifier_model="gemma2-9b-it",
+            verifier_model="qwen/qwen3.8-27b",
         )
 
         job.status = "done"

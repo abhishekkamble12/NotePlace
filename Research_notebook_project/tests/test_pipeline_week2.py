@@ -302,3 +302,11 @@ async def test_full_multi_mode_pipeline_lifecycle():
             render_out = await render_node(state)
             assert render_out["status"] in ("done", "running")
             assert render_out["stage"] == "done"
+
+
+@pytest.mark.asyncio
+async def test_writer_budget_cap_returns_no_claims_instead_of_failing_job():
+    from app.core.llm import BudgetExceededError
+    from app.writer import draft_claims_for_subquestion
+    with patch("app.writer.call_llm", AsyncMock(side_effect=BudgetExceededError("Phase 'writing' token cap reached"))):
+        assert await draft_claims_for_subquestion(None, 1, 1, "q", []) == []

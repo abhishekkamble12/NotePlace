@@ -32,11 +32,10 @@ class BudgetExceededError(Exception):
 class RateLimitExceededError(Exception):
     """Raised when waiting for a rate limit would breach the job deadline."""
 
-# Modeled pricing per 1,000 tokens (USD)
+# Modeled pricing per 1,000 tokens (USD). gpt-oss-120b / qwen3.8-27b have no verified price here: they use "default", a generic
+# placeholder, so USD for them is a rough model, not Groq's bill. Token counts are provider-reported.
 MODEL_PRICING: dict[str, dict[str, float]] = {
-    "llama-3.3-70b-versatile": {"input": 0.00059, "output": 0.00079},
     "llama-3.1-8b-instant": {"input": 0.00005, "output": 0.00008},
-    "gemma2-9b-it": {"input": 0.00020, "output": 0.00020},
     "default": {"input": 0.00050, "output": 0.00150},
 }
 
@@ -107,7 +106,7 @@ PROVIDER_TIMEOUT_S = 60.0
 
 def get_provider_chain(model: str) -> list[dict[str, str]]:
     """Primary Groq model first, then fallbacks from CITEGUARD_FALLBACKS, e.g.
-    {"gemma2-9b-it": [{"provider": "openai_compat", "model": "x", "base_url": "https://.../v1", "api_key_env": "OTHER_KEY"}]}.
+    {"qwen/qwen3.8-27b": [{"provider": "openai_compat", "model": "x", "base_url": "https://.../v1", "api_key_env": "OTHER_KEY"}]}.
     A fallback verifier must be a different model family from the writer."""
     chain = [{"provider": "groq", "model": model}]
     try:
@@ -124,7 +123,9 @@ async def _call_provider(
     if spec["provider"] == "groq":
         client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
         resp = await client.chat.completions.create(
-            model=spec["model"], messages=messages, max_tokens=max_tokens, response_format=response_format  # type: ignore
+            model=spec["model"], messages=messages, max_tokens=max_tokens, response_format=response_format,  # type: ignore
+            # gpt-oss spends max_tokens on hidden reasoning and returns no JSON at the default effort (observed: 400 json_validate_failed)
+            extra_body={"reasoning_effort": "low"} if "gpt-oss" in spec["model"] else None,
         )
         usage = resp.usage
         return resp.choices[0].message.content or "", getattr(usage, "prompt_tokens", None), getattr(usage, "completion_tokens", None)
@@ -245,7 +246,8 @@ class SlidingWindowRateLimiter:
                 records = [(t, count) for (t, count) in records if now - t < 60.0]
                 current_tpm = sum(count for _, count in records)
 
-                if current_tpm + estimated_tokens <= self.tpm_limit:
+                # empty window: a request larger than the whole limit can never fit by waiting, so let it through
+                if not records or current_tpm + estimated_tokens <= self.tpm_limit:
                     records.append((now, estimated_tokens))
                     self.history[model] = records
                     return
@@ -421,7 +423,7 @@ async def check_budget_caps(
 async def call_llm(
     scope: tuple[str, int] | None = None,
     phase: str = "research",
-    model: str = "llama-3.3-70b-versatile",
+    model: str = "openai/gpt-oss-120b",
     messages: list[dict[str, str]] | None = None,
     max_tokens: int = 1000,
     schema: type[T] | None = None,

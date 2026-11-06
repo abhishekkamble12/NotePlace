@@ -169,7 +169,7 @@ async def generate_markdown_report(db: AsyncSession, job_id: int) -> str:
     if usage["modeled_usd_legacy"]:
         report_lines.append(f"- **Modeled USD, Legacy Rows (unverified):** ${usage['modeled_usd_legacy']:.4f}")
     report_lines.append(f"- **Total Elapsed Time (summed provider latency):** {latency_sec:.2f} seconds")
-    report_lines.append("- **Models Used:** Writer (`llama-3.3-70b-versatile`), Verifier (`gemma2-9b-it`)")
+    report_lines.append("- **Models Used:** Writer (`openai/gpt-oss-120b`), Verifier (`qwen/qwen3.8-27b`)")
 
     markdown = "\n".join(report_lines)
     job.report_md = markdown

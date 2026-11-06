@@ -224,3 +224,11 @@ def test_framework_rule_no_langchain_model_imports():
                 f"Forbidden import '{forbidden}' found in {py_file}. "
                 "Framework rule: LangGraph only, no LangChain model wrappers (they bypass call_llm budget)."
             )
+
+
+@pytest.mark.asyncio
+async def test_rate_limiter_single_request_over_limit_does_not_crash():
+    """Regression (jobs 15, 17, 18): one estimate > tpm_limit on an empty window raised IndexError on records[0]."""
+    limiter = SlidingWindowRateLimiter(tpm_limit=1000, clock_fn=lambda: 1000.0, sleep_fn=AsyncMock())
+    await limiter.acquire(estimated_tokens=5000, model="m")
+    assert sum(c for _, c in limiter.history["m"]) == 5000  # recorded, so the next call waits for the window

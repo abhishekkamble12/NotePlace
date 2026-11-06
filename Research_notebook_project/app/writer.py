@@ -6,7 +6,7 @@ import re
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.llm import ProviderUnavailableError, call_llm
+from app.core.llm import BudgetExceededError, ProviderUnavailableError, call_llm
 from app.models import Claim
 
 MAX_CITED_SENTENCES = 3
@@ -108,7 +108,7 @@ async def draft_claims_for_subquestion(
     subq_id: int,
     subq_text: str,
     evidence_snippets: list[dict],  # [{"chunk_id", "source_id", "start", "text"}] text == snapshot[start:start+len]
-    writer_model: str = "llama-3.3-70b-versatile",
+    writer_model: str = "openai/gpt-oss-120b",
 ) -> list[Claim]:
     """Drafts claims for a sub-question under the 'writing' budget phase. Invalid references are stored as dropped."""
     user_prompt = f"""SUB-QUESTION:
@@ -125,7 +125,7 @@ Write 2 to 4 atomic claims. Cite each by chunk_id and sentence indices."""
             messages=[{"role": "system", "content": WRITER_SYSTEM_PROMPT}, {"role": "user", "content": user_prompt}],
             max_tokens=800, schema=SubQuestionDraft, db=db,
         )
-    except ProviderUnavailableError:
+    except (ProviderUnavailableError, BudgetExceededError):  # cap hit: keep claims written so far, skip this sub-question
         return []
     except ValidationError:  # invalid JSON twice: write nothing for this sub-question (fail closed)
         return []

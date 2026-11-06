@@ -26,7 +26,7 @@ async def generate_plan(
     db: AsyncSession,
     job_id: int,
     main_question: str,
-    planner_model: str = "llama-3.3-70b-versatile"
+    planner_model: str = "openai/gpt-oss-120b"
 ) -> list[SubQuestion]:
     """
     Decomposes the main research question into 4-8 subquestions using call_llm

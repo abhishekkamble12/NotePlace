@@ -84,9 +84,9 @@ def test_token_estimation_and_cost_math():
     tokens = estimate_prompt_tokens(messages)
     assert tokens >= 4
 
-    cost = calculate_modeled_usd("llama-3.3-70b-versatile", tokens_in=1000, tokens_out=1000)
-    # 0.00059 + 0.00079 = 0.00138
-    assert abs(cost - 0.00138) < 1e-5
+    cost = calculate_modeled_usd("openai/gpt-oss-120b", tokens_in=1000, tokens_out=1000)
+    # no verified price for this model -> generic default: 0.0005 + 0.0015 = 0.002
+    assert abs(cost - 0.002) < 1e-5
 
 
 

@@ -245,7 +245,7 @@ async def verify_claim(
     claim_text: str,
     quote: str,
     snapshot: str,
-    verifier_model: str = "gemma2-9b-it",
+    verifier_model: str = "qwen/qwen3.8-27b",
     *,
     start: int | None = None,
     end: int | None = None,
@@ -330,7 +330,7 @@ async def rewrite_claim(
     original_claim: str,
     quote: str,
     critique_reason: str,
-    writer_model: str = "llama-3.3-70b-versatile",
+    writer_model: str = "openai/gpt-oss-120b",
 ) -> str | None:
     """Single rewrite attempt of a partially supported claim. `quote` must be the snapshot-resolved span."""
     try:
