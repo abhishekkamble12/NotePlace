@@ -1,104 +1,170 @@
 # scripts/eval_verifier.py
+"""
+CiteGuard Verifier Evaluation Harness (Week 1 / Spec §9.0).
+Measures precision, recall (catch rate), and false-drop rate on the benchmark test set.
+Can run against the database table verifier_testset or directly against evals/verifier_testset.csv.
+WARNING: this script calls a live provider (Groq) through call_llm. Results on the current
+175-pair set are NOT credible evidence: the set is hand-written, easy, and the prompt was
+tuned on it (see AUDIT.md). No baseline or CI gate exists.
+"""
+import argparse
 import asyncio
+import csv
+import hashlib
+import json
+import random
+import sys
 from collections import defaultdict
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.db import AsyncSessionLocal, init_db
+from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock
+
+# Add project root to sys.path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from app.core.verifier import VERIFIER_SYSTEM_PROMPT, verify_claim
 from app.models import Job, VerifierTestSet
-from app.verifier import verify_claim
 
-async def run_evaluation():
-    await init_db()
+CSV_PATH = Path(__file__).resolve().parents[1] / "evals" / "verifier_testset.csv"
+RUNS_DIR = CSV_PATH.parent / "eval_runs"
 
-    async with AsyncSessionLocal() as session:
-        # Create a mock job for the evaluation run
-        eval_job = Job(
-            question="Evaluation Benchmark Run for Verifier",
-            max_tokens=200_000,
-            max_minutes=30,
-            mode="single",
-            status="running",
-            stage="verifying"
+
+async def load_test_items(csv_only: bool = False, limit: int | None = None) -> list[dict]:
+    items = []
+    # If not forced to csv_only, attempt loading from DB first
+    if not csv_only:
+        try:
+            from sqlalchemy import select
+
+            from app.db import AsyncSessionLocal, init_db
+            await init_db()
+            async with AsyncSessionLocal() as session:
+                res = await session.execute(select(VerifierTestSet))
+                db_items = res.scalars().all()
+                if db_items:
+                    items = [
+                        {
+                            "id": item.id,
+                            "quote": item.quote,
+                            "claim": item.claim,
+                            "context": item.context,
+                            "perturbation_type": item.perturbation_type,
+                            "label": item.label,
+                            "source": item.source,
+                        }
+                        for item in db_items
+                    ]
+        except Exception:
+            pass
+
+    if not items and CSV_PATH.exists():
+        with open(CSV_PATH, encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                items.append({
+                    "id": int(row.get("id", len(items) + 1)),
+                    "quote": row["quote"],
+                    "claim": row["claim"],
+                    "context": row.get("context", ""),
+                    "perturbation_type": row.get("perturbation_type", "original"),
+                    "label": row["label"],
+                    "source": row.get("source", ""),
+                })
+
+    if limit is not None:
+        items = items[:limit]
+
+    return items
+
+
+async def run_evaluation(csv_only: bool = False, limit: int | None = None, model: str = "gemma2-9b-it"):
+    items = await load_test_items(csv_only=csv_only, limit=limit)
+
+    if not items:
+        print("No benchmark items found. Run 'python scripts/generate_testset.py' first.")
+        return
+
+    print("\n" + "=" * 65)
+    print(f"  CITEGUARD VERIFIER BENCHMARK EVALUATION ({len(items)} samples)")
+    print(f"  Model: {model}")
+    print("=" * 65 + "\n")
+
+    # Mock DB session for evaluating without requiring active job table write
+    mock_db = AsyncMock()
+    mock_db.add = MagicMock()
+    mock_db.get.return_value = Job(id=999, max_tokens=1_000_000)
+
+    rows = []  # (item, predicted verdict, match score)
+    for i, item in enumerate(items, 1):
+        res = await verify_claim(
+            db=mock_db,
+            job_id=999,
+            claim_text=item["claim"],
+            quote=item["quote"],
+            snapshot=item['context'] + chr(10) + item['quote'],
+            verifier_model=model,
         )
-        session.add(eval_job)
-        await session.commit()
-        await session.refresh(eval_job)
+        rows.append((item, res.verdict, res.match_score))
+        if res.verdict != item["label"]:
+            print(f"[{i:>3}/{len(items)}] [{item['perturbation_type']:<15}] Label: {item['label']:<11} Pred: {res.verdict:<11} {res.reason}")
 
-        # Fetch test set
-        result = await session.execute(select(VerifierTestSet))
-        items = result.scalars().all()
+    # Split by quote so all perturbations of a quote share a split (no leakage); heldout is for the final number only.
+    splits = {"dev": [r for r in rows if not is_heldout(r[0]["quote"])],
+              "heldout": [r for r in rows if is_heldout(r[0]["quote"])],
+              "all": rows}
+    summary = {name: report(name, rs) for name, rs in splits.items() if rs}
 
-        if not items:
-            print("No items found in verifier_testset. Run 'python scripts/seed_verifier_testset.py' first.")
-            return
+    RUNS_DIR.mkdir(exist_ok=True)
+    log = {"model": model, "n": len(rows), "summary": summary,
+           "prompt_sha": hashlib.sha1(VERIFIER_SYSTEM_PROMPT.encode()).hexdigest()[:8]}
+    (RUNS_DIR / f"{log['prompt_sha']}_{model.replace('/', '_')}.json").write_text(json.dumps(log, indent=2))
 
-        print(f"\n=======================================================")
-        print(f"  RUNNING CITEGUARD VERIFIER BENCHMARK ({len(items)} samples)")
-        print(f"=======================================================\n")
 
-        total = len(items)
-        tp = 0  # True Positive: actual unsupported, predicted unsupported
-        fp = 0  # False Positive: actual supported, predicted unsupported
-        tn = 0  # True Negative: actual supported, predicted supported
-        fn = 0  # False Negative: actual unsupported, predicted supported/partial
+def is_heldout(quote: str) -> bool:
+    return int(hashlib.sha1(quote.encode()).hexdigest(), 16) % 10 < 3  # ~30%
 
-        type_stats = defaultdict(lambda: {"total": 0, "correct": 0})
 
-        for i, item in enumerate(items, 1):
-            # snapshot is context + quote
-            snapshot = f"{item.context}\n{item.quote}"
-            res = await verify_claim(
-                db=session,
-                job_id=eval_job.id,
-                claim_text=item.claim,
-                quote=item.quote,
-                snapshot=snapshot
-            )
+def bootstrap_ci(pairs: list[tuple[bool, bool]], n: int = 1000) -> tuple[float, float]:
+    """95% CI of recall over (is_unsupported, predicted_unsupported) pairs."""
+    pos = [p for a, p in pairs if a]
+    if not pos:
+        return 0.0, 0.0
+    rng = random.Random(0)
+    stats = sorted(sum(rng.choices(pos, k=len(pos))) / len(pos) for _ in range(n))
+    return stats[int(0.025 * n)], stats[int(0.975 * n)]
 
-            is_actual_unsupported = item.label == "unsupported"
-            is_pred_unsupported = res.verdict == "unsupported"
 
-            if is_actual_unsupported and is_pred_unsupported:
-                tp += 1
-            elif not is_actual_unsupported and is_pred_unsupported:
-                fp += 1
-            elif not is_actual_unsupported and not is_pred_unsupported:
-                tn += 1
-            else:
-                fn += 1
+def report(name: str, rs: list) -> dict:
+    labels = ["supports", "partial", "unsupported"]
+    conf = {a: {b: 0 for b in labels} for a in labels}
+    by_type = defaultdict(lambda: [0, 0])  # perturbation -> [caught, total] (unsupported only)
+    for item, pred, _ in rs:
+        conf[item["label"]][pred] += 1
+        if item["label"] == "unsupported":
+            by_type[item["perturbation_type"]][1] += 1
+            by_type[item["perturbation_type"]][0] += pred == "unsupported"
+    tp, fn = conf["unsupported"]["unsupported"], conf["unsupported"]["supports"] + conf["unsupported"]["partial"]
+    fp = conf["supports"]["unsupported"] + conf["partial"]["unsupported"]
+    neg = sum(sum(conf[a].values()) for a in ("supports", "partial"))
+    precision = tp / (tp + fp) if tp + fp else 0.0
+    recall = tp / (tp + fn) if tp + fn else 0.0
+    false_alarm = fp / neg if neg else 0.0
+    lo, hi = bootstrap_ci([(it["label"] == "unsupported", pred == "unsupported") for it, pred, _ in rs])
+    print(f"\n=== {name.upper()} (n={len(rs)}) ===")
+    print(f"recall(unsupported)={recall:.1%} [95% CI {lo:.1%}-{hi:.1%}]  precision={precision:.1%}  false-alarm={false_alarm:.1%}")
+    print("baseline always-unsupported: recall=100.0% false-alarm=100.0%  (a useful verifier must beat the false-alarm side)")
+    print(f"{'actual/pred':<14}" + "".join(f"{b:>13}" for b in labels))
+    for a in labels:
+        print(f"{a:<14}" + "".join(f"{conf[a][b]:>13}" for b in labels))
+    for t, (c, n) in sorted(by_type.items()):
+        print(f"  {t:<15} caught {c}/{n} ({c / n:.0%})")
+    return {"recall": recall, "precision": precision, "false_alarm": false_alarm, "ci": [lo, hi], "n": len(rs)}
 
-            type_stat = type_stats[item.perturbation_type]
-            type_stat["total"] += 1
-            # Check if prediction matched the exact label or direction
-            if res.verdict == item.label or (item.label == "unsupported" and res.verdict == "unsupported"):
-                type_stat["correct"] += 1
-
-            print(f"[{i}/{total}] [{item.perturbation_type:<18}] Label: {item.label:<11} Pred: {res.verdict:<11} Match: {res.match_score:.0f}%")
-            if res.reason:
-                print(f"       Reason: {res.reason}")
-
-        # Metrics calculation
-        precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
-        recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-        f1 = (2 * precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
-        false_drop_rate = fp / (fp + tn) if (fp + tn) > 0 else 0.0
-
-        print("\n" + "=" * 55)
-        print("                 BENCHMARK RESULTS")
-        print("=" * 55)
-        print(f"Total Evaluated Claims       : {total}")
-        print(f"Verifier Catch Rate (Recall) : {recall * 100:.1f}%")
-        print(f"Citation Precision           : {precision * 100:.1f}%")
-        print(f"False-Drop Rate              : {false_drop_rate * 100:.1f}%")
-        print(f"F1 Score                     : {f1:.3f}")
-        print("-" * 55)
-        print(f"{'Perturbation Type':<25} | {'Accuracy':<10}")
-        print("-" * 55)
-        for p_type, stats in type_stats.items():
-            acc = (stats["correct"] / stats["total"]) * 100 if stats["total"] > 0 else 0.0
-            print(f"{p_type:<25} | {acc:.1f}% ({stats['correct']}/{stats['total']})")
-        print("=" * 55 + "\n")
 
 if __name__ == "__main__":
-    asyncio.run(run_evaluation())
+    parser = argparse.ArgumentParser(description="Evaluate CiteGuard verifier on test set.")
+    parser.add_argument("--csv-only", action="store_true", help="Load directly from CSV without DB")
+    parser.add_argument("--limit", type=int, default=None, help="Limit number of items to evaluate")
+    parser.add_argument("--model", type=str, default="gemma2-9b-it", help="Model to evaluate")
+    args = parser.parse_args()
 
+    asyncio.run(run_evaluation(csv_only=args.csv_only, limit=args.limit, model=args.model))

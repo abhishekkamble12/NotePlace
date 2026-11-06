@@ -1,0 +1,101 @@
+[
+  {
+    "id": "q1",
+    "category": "factual_synthesis",
+    "question": "What are the efficiency and degradation benchmarks of perovskite-silicon tandem solar cells as of 2024?",
+    "expected_contested": false,
+    "thin_evidence": false
+  },
+  {
+    "id": "q2",
+    "category": "factual_synthesis",
+    "question": "How does FlashAttention-2 reduce memory IO complexity and improve training throughput in Transformer architectures?",
+    "expected_contested": false,
+    "thin_evidence": false
+  },
+  {
+    "id": "q3",
+    "category": "factual_synthesis",
+    "question": "What are the verified clinical efficacy and off-target mutation rates of CRISPR base editing therapies in Phase 1/2 trials?",
+    "expected_contested": false,
+    "thin_evidence": false
+  },
+  {
+    "id": "q4",
+    "category": "factual_synthesis",
+    "question": "What are the confirmed quantum volume and two-qubit gate fidelity metrics of Google Sycamore vs IBM Eagle processors?",
+    "expected_contested": false,
+    "thin_evidence": false
+  },
+  {
+    "id": "q5",
+    "category": "comparison",
+    "question": "Compare HNSW and IVFFlat index recall, build time, and query QPS in PostgreSQL pgvector against dedicated vector engines.",
+    "expected_contested": false,
+    "thin_evidence": false
+  },
+  {
+    "id": "q6",
+    "category": "comparison",
+    "question": "Compare Llama 3 70B and Mistral Large regarding inference latency, context window limits, and commercial licensing for enterprise RAG.",
+    "expected_contested": false,
+    "thin_evidence": false
+  },
+  {
+    "id": "q7",
+    "category": "comparison",
+    "question": "Compare Rust vs Go for high-throughput network proxies regarding memory footprint, tail latency (p99), and GC pause times.",
+    "expected_contested": false,
+    "thin_evidence": false
+  },
+  {
+    "id": "q8",
+    "category": "comparison",
+    "question": "Compare Apache Iceberg and Delta Lake table formats regarding ACID guarantees, hidden partitioning, and engine-agnostic reader support.",
+    "expected_contested": false,
+    "thin_evidence": false
+  },
+  {
+    "id": "q9",
+    "category": "contested_topic",
+    "question": "Does aspartame and sucralose consumption increase cardiovascular disease risk or metabolic dysfunction according to RCTs vs observational cohorts?",
+    "expected_contested": true,
+    "thin_evidence": false
+  },
+  {
+    "id": "q10",
+    "category": "contested_topic",
+    "question": "What is the empirical effect of full-time remote work on software engineer productivity and PR cycle times across large tech organizations?",
+    "expected_contested": true,
+    "thin_evidence": false
+  },
+  {
+    "id": "q11",
+    "category": "contested_topic",
+    "question": "What was the scientific consensus and experimental replication outcome regarding the LK-99 room-temperature ambient pressure superconductivity claims?",
+    "expected_contested": true,
+    "thin_evidence": false
+  },
+  {
+    "id": "q12",
+    "category": "thin_evidence",
+    "question": "What are the verified production deployment metrics and commercial foundry yield numbers for commercial memristor neuromorphic accelerator chips in 2024?",
+    "expected_contested": false,
+    "thin_evidence": true
+  },
+  {
+    "id": "q13",
+    "category": "thin_evidence",
+    "question": "What are the verified reproducible energy gain and neutron emission rates of acoustic cavitation bubble fusion experiments?",
+    "expected_contested": true,
+    "thin_evidence": true
+  },
+  {
+    "id": "q14",
+    "category": "thin_evidence",
+    "question": "What are the verified architectural specifications, die sizes, and memory bandwidth figures for Apple's internal server-side M-series AI cloud chips?",
+    "expected_contested": false,
+    "thin_evidence": true
+  }
+]
+
