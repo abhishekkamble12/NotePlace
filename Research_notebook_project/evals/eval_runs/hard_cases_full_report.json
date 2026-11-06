@@ -1,0 +1,54 @@
+{
+ "predictions_sha256": "80ff627cf26d96b4cdc9c2225ce5fdf26f744163e7e9ecce22a2d2b4073bad7a",
+ "git": "cc202a9df71659422aacfd1652c9646ebd58b132",
+ "metrics": {
+  "n": 24,
+  "kept": 5,
+  "gold_supports": 9,
+  "tp": 5,
+  "precision": 1.0,
+  "retention": 0.5555555555555556,
+  "f1": 0.7142857142857143
+ },
+ "ci95": {
+  "n_boot": 2000,
+  "skipped_resamples": 8,
+  "precision": [
+   1.0,
+   1.0
+  ],
+  "retention": [
+   0.2222222222222222,
+   0.8888888888888888
+  ],
+  "f1": [
+   0.3636363636363636,
+   0.9411764705882353
+  ],
+  "precision_wilson": [
+   0.5655085052479191,
+   1.0
+  ],
+  "retention_wilson": [
+   0.2666473457440297,
+   0.811224570528086
+  ]
+ },
+ "confusion_rowgold_colpred": {
+  "supports": {
+   "supports": 5,
+   "partial": 1,
+   "unsupported": 3
+  },
+  "partial": {
+   "supports": 0,
+   "partial": 1,
+   "unsupported": 1
+  },
+  "unsupported": {
+   "supports": 0,
+   "partial": 1,
+   "unsupported": 12
+  }
+ }
+}

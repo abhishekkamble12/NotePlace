@@ -1,0 +1,1137 @@
+{
+ "data_kind": "synthetic_single_annotator",
+ "dataset_sha256": "c8031d1d3b9e6905d4ede0b53291b694b475bf274142a90a58d9b310b04e3738",
+ "git": "cc202a9df71659422aacfd1652c9646ebd58b132",
+ "gold_counts": {
+  "supports": 9,
+  "unsupported": 13,
+  "partial": 2
+ },
+ "arms": {
+  "stage1": {
+   "n": 24,
+   "accuracy": 0.4166666666666667,
+   "per_class": {
+    "supports": {
+     "precision": 0.35294117647058826,
+     "recall": 0.6666666666666666,
+     "f1": 0.46153846153846156,
+     "support": 9
+    },
+    "partial": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "support": 2
+    },
+    "unsupported": {
+     "precision": 0.5714285714285714,
+     "recall": 0.3076923076923077,
+     "f1": 0.4,
+     "support": 13
+    }
+   },
+   "macro_f1": 0.2871794871794872,
+   "weighted_f1": 0.38974358974358975,
+   "confusion_rowgold_colpred": {
+    "supports": {
+     "supports": 6,
+     "partial": 0,
+     "unsupported": 3
+    },
+    "partial": {
+     "supports": 2,
+     "partial": 0,
+     "unsupported": 0
+    },
+    "unsupported": {
+     "supports": 9,
+     "partial": 0,
+     "unsupported": 4
+    }
+   },
+   "by_category_correct_total": {
+    "paraphrase": [
+     2,
+     3
+    ],
+    "partial": [
+     0,
+     3
+    ],
+    "rounding": [
+     2,
+     4
+    ],
+    "negation": [
+     1,
+     3
+    ],
+    "hedging": [
+     1,
+     3
+    ],
+    "multi_hop": [
+     1,
+     2
+    ],
+    "overstated": [
+     0,
+     3
+    ],
+    "adversarial_snapshot": [
+     3,
+     3
+    ]
+   },
+   "errors": [
+    {
+     "id": "3",
+     "cat": "paraphrase",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "4",
+     "cat": "partial",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "5",
+     "cat": "partial",
+     "gold": "partial",
+     "pred": "supports"
+    },
+    {
+     "id": "6",
+     "cat": "partial",
+     "gold": "partial",
+     "pred": "supports"
+    },
+    {
+     "id": "7",
+     "cat": "rounding",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "9",
+     "cat": "rounding",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "11",
+     "cat": "negation",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "12",
+     "cat": "negation",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "14",
+     "cat": "hedging",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "16",
+     "cat": "hedging",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "18",
+     "cat": "multi_hop",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "19",
+     "cat": "overstated",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "20",
+     "cat": "overstated",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "21",
+     "cat": "overstated",
+     "gold": "unsupported",
+     "pred": "supports"
+    }
+   ]
+  },
+  "fuzzy-60": {
+   "n": 24,
+   "accuracy": 0.375,
+   "per_class": {
+    "supports": {
+     "precision": 0.375,
+     "recall": 1.0,
+     "f1": 0.5454545454545454,
+     "support": 9
+    },
+    "partial": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "support": 2
+    },
+    "unsupported": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "support": 13
+    }
+   },
+   "macro_f1": 0.1818181818181818,
+   "weighted_f1": 0.2045454545454545,
+   "confusion_rowgold_colpred": {
+    "supports": {
+     "supports": 9,
+     "partial": 0,
+     "unsupported": 0
+    },
+    "partial": {
+     "supports": 2,
+     "partial": 0,
+     "unsupported": 0
+    },
+    "unsupported": {
+     "supports": 13,
+     "partial": 0,
+     "unsupported": 0
+    }
+   },
+   "by_category_correct_total": {
+    "paraphrase": [
+     3,
+     3
+    ],
+    "partial": [
+     0,
+     3
+    ],
+    "rounding": [
+     2,
+     4
+    ],
+    "negation": [
+     1,
+     3
+    ],
+    "hedging": [
+     1,
+     3
+    ],
+    "multi_hop": [
+     1,
+     2
+    ],
+    "overstated": [
+     0,
+     3
+    ],
+    "adversarial_snapshot": [
+     1,
+     3
+    ]
+   },
+   "errors": [
+    {
+     "id": "4",
+     "cat": "partial",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "5",
+     "cat": "partial",
+     "gold": "partial",
+     "pred": "supports"
+    },
+    {
+     "id": "6",
+     "cat": "partial",
+     "gold": "partial",
+     "pred": "supports"
+    },
+    {
+     "id": "8",
+     "cat": "rounding",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "10",
+     "cat": "rounding",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "11",
+     "cat": "negation",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "12",
+     "cat": "negation",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "14",
+     "cat": "hedging",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "16",
+     "cat": "hedging",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "18",
+     "cat": "multi_hop",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "19",
+     "cat": "overstated",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "20",
+     "cat": "overstated",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "21",
+     "cat": "overstated",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "22",
+     "cat": "adversarial_snapshot",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "23",
+     "cat": "adversarial_snapshot",
+     "gold": "unsupported",
+     "pred": "supports"
+    }
+   ]
+  },
+  "fuzzy-70": {
+   "n": 24,
+   "accuracy": 0.2916666666666667,
+   "per_class": {
+    "supports": {
+     "precision": 0.25,
+     "recall": 0.4444444444444444,
+     "f1": 0.32,
+     "support": 9
+    },
+    "partial": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "support": 2
+    },
+    "unsupported": {
+     "precision": 0.375,
+     "recall": 0.23076923076923078,
+     "f1": 0.2857142857142857,
+     "support": 13
+    }
+   },
+   "macro_f1": 0.2019047619047619,
+   "weighted_f1": 0.27476190476190476,
+   "confusion_rowgold_colpred": {
+    "supports": {
+     "supports": 4,
+     "partial": 0,
+     "unsupported": 5
+    },
+    "partial": {
+     "supports": 2,
+     "partial": 0,
+     "unsupported": 0
+    },
+    "unsupported": {
+     "supports": 10,
+     "partial": 0,
+     "unsupported": 3
+    }
+   },
+   "by_category_correct_total": {
+    "paraphrase": [
+     1,
+     3
+    ],
+    "partial": [
+     0,
+     3
+    ],
+    "rounding": [
+     2,
+     4
+    ],
+    "negation": [
+     1,
+     3
+    ],
+    "hedging": [
+     0,
+     3
+    ],
+    "multi_hop": [
+     1,
+     2
+    ],
+    "overstated": [
+     1,
+     3
+    ],
+    "adversarial_snapshot": [
+     1,
+     3
+    ]
+   },
+   "errors": [
+    {
+     "id": "2",
+     "cat": "paraphrase",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "3",
+     "cat": "paraphrase",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "4",
+     "cat": "partial",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "5",
+     "cat": "partial",
+     "gold": "partial",
+     "pred": "supports"
+    },
+    {
+     "id": "6",
+     "cat": "partial",
+     "gold": "partial",
+     "pred": "supports"
+    },
+    {
+     "id": "8",
+     "cat": "rounding",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "10",
+     "cat": "rounding",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "12",
+     "cat": "negation",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "13",
+     "cat": "negation",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "14",
+     "cat": "hedging",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "15",
+     "cat": "hedging",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "16",
+     "cat": "hedging",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "17",
+     "cat": "multi_hop",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "19",
+     "cat": "overstated",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "21",
+     "cat": "overstated",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "22",
+     "cat": "adversarial_snapshot",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "23",
+     "cat": "adversarial_snapshot",
+     "gold": "unsupported",
+     "pred": "supports"
+    }
+   ]
+  },
+  "fuzzy-80": {
+   "n": 24,
+   "accuracy": 0.375,
+   "per_class": {
+    "supports": {
+     "precision": 0.25,
+     "recall": 0.2222222222222222,
+     "f1": 0.23529411764705882,
+     "support": 9
+    },
+    "partial": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "support": 2
+    },
+    "unsupported": {
+     "precision": 0.4375,
+     "recall": 0.5384615384615384,
+     "f1": 0.4827586206896552,
+     "support": 13
+    }
+   },
+   "macro_f1": 0.23935091277890466,
+   "weighted_f1": 0.3497295469912103,
+   "confusion_rowgold_colpred": {
+    "supports": {
+     "supports": 2,
+     "partial": 0,
+     "unsupported": 7
+    },
+    "partial": {
+     "supports": 0,
+     "partial": 0,
+     "unsupported": 2
+    },
+    "unsupported": {
+     "supports": 6,
+     "partial": 0,
+     "unsupported": 7
+    }
+   },
+   "by_category_correct_total": {
+    "paraphrase": [
+     0,
+     3
+    ],
+    "partial": [
+     1,
+     3
+    ],
+    "rounding": [
+     2,
+     4
+    ],
+    "negation": [
+     1,
+     3
+    ],
+    "hedging": [
+     0,
+     3
+    ],
+    "multi_hop": [
+     1,
+     2
+    ],
+    "overstated": [
+     3,
+     3
+    ],
+    "adversarial_snapshot": [
+     1,
+     3
+    ]
+   },
+   "errors": [
+    {
+     "id": "1",
+     "cat": "paraphrase",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "2",
+     "cat": "paraphrase",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "3",
+     "cat": "paraphrase",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "5",
+     "cat": "partial",
+     "gold": "partial",
+     "pred": "unsupported"
+    },
+    {
+     "id": "6",
+     "cat": "partial",
+     "gold": "partial",
+     "pred": "unsupported"
+    },
+    {
+     "id": "8",
+     "cat": "rounding",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "9",
+     "cat": "rounding",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "12",
+     "cat": "negation",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "13",
+     "cat": "negation",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "14",
+     "cat": "hedging",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "15",
+     "cat": "hedging",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "16",
+     "cat": "hedging",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "17",
+     "cat": "multi_hop",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "22",
+     "cat": "adversarial_snapshot",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "23",
+     "cat": "adversarial_snapshot",
+     "gold": "unsupported",
+     "pred": "supports"
+    }
+   ]
+  },
+  "fuzzy-90": {
+   "n": 24,
+   "accuracy": 0.5,
+   "per_class": {
+    "supports": {
+     "precision": 0.3333333333333333,
+     "recall": 0.1111111111111111,
+     "f1": 0.16666666666666666,
+     "support": 9
+    },
+    "partial": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "support": 2
+    },
+    "unsupported": {
+     "precision": 0.5238095238095238,
+     "recall": 0.8461538461538461,
+     "f1": 0.6470588235294118,
+     "support": 13
+    }
+   },
+   "macro_f1": 0.27124183006535946,
+   "weighted_f1": 0.4129901960784314,
+   "confusion_rowgold_colpred": {
+    "supports": {
+     "supports": 1,
+     "partial": 0,
+     "unsupported": 8
+    },
+    "partial": {
+     "supports": 0,
+     "partial": 0,
+     "unsupported": 2
+    },
+    "unsupported": {
+     "supports": 2,
+     "partial": 0,
+     "unsupported": 11
+    }
+   },
+   "by_category_correct_total": {
+    "paraphrase": [
+     0,
+     3
+    ],
+    "partial": [
+     1,
+     3
+    ],
+    "rounding": [
+     2,
+     4
+    ],
+    "negation": [
+     2,
+     3
+    ],
+    "hedging": [
+     2,
+     3
+    ],
+    "multi_hop": [
+     1,
+     2
+    ],
+    "overstated": [
+     3,
+     3
+    ],
+    "adversarial_snapshot": [
+     1,
+     3
+    ]
+   },
+   "errors": [
+    {
+     "id": "1",
+     "cat": "paraphrase",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "2",
+     "cat": "paraphrase",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "3",
+     "cat": "paraphrase",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "5",
+     "cat": "partial",
+     "gold": "partial",
+     "pred": "unsupported"
+    },
+    {
+     "id": "6",
+     "cat": "partial",
+     "gold": "partial",
+     "pred": "unsupported"
+    },
+    {
+     "id": "7",
+     "cat": "rounding",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "9",
+     "cat": "rounding",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "13",
+     "cat": "negation",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "15",
+     "cat": "hedging",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "17",
+     "cat": "multi_hop",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "22",
+     "cat": "adversarial_snapshot",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "23",
+     "cat": "adversarial_snapshot",
+     "gold": "unsupported",
+     "pred": "supports"
+    }
+   ]
+  },
+  "fuzzy-95": {
+   "n": 24,
+   "accuracy": 0.5,
+   "per_class": {
+    "supports": {
+     "precision": 0.3333333333333333,
+     "recall": 0.1111111111111111,
+     "f1": 0.16666666666666666,
+     "support": 9
+    },
+    "partial": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "support": 2
+    },
+    "unsupported": {
+     "precision": 0.5238095238095238,
+     "recall": 0.8461538461538461,
+     "f1": 0.6470588235294118,
+     "support": 13
+    }
+   },
+   "macro_f1": 0.27124183006535946,
+   "weighted_f1": 0.4129901960784314,
+   "confusion_rowgold_colpred": {
+    "supports": {
+     "supports": 1,
+     "partial": 0,
+     "unsupported": 8
+    },
+    "partial": {
+     "supports": 0,
+     "partial": 0,
+     "unsupported": 2
+    },
+    "unsupported": {
+     "supports": 2,
+     "partial": 0,
+     "unsupported": 11
+    }
+   },
+   "by_category_correct_total": {
+    "paraphrase": [
+     0,
+     3
+    ],
+    "partial": [
+     1,
+     3
+    ],
+    "rounding": [
+     2,
+     4
+    ],
+    "negation": [
+     2,
+     3
+    ],
+    "hedging": [
+     2,
+     3
+    ],
+    "multi_hop": [
+     1,
+     2
+    ],
+    "overstated": [
+     3,
+     3
+    ],
+    "adversarial_snapshot": [
+     1,
+     3
+    ]
+   },
+   "errors": [
+    {
+     "id": "1",
+     "cat": "paraphrase",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "2",
+     "cat": "paraphrase",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "3",
+     "cat": "paraphrase",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "5",
+     "cat": "partial",
+     "gold": "partial",
+     "pred": "unsupported"
+    },
+    {
+     "id": "6",
+     "cat": "partial",
+     "gold": "partial",
+     "pred": "unsupported"
+    },
+    {
+     "id": "7",
+     "cat": "rounding",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "9",
+     "cat": "rounding",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "13",
+     "cat": "negation",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "15",
+     "cat": "hedging",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "17",
+     "cat": "multi_hop",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "22",
+     "cat": "adversarial_snapshot",
+     "gold": "unsupported",
+     "pred": "supports"
+    },
+    {
+     "id": "23",
+     "cat": "adversarial_snapshot",
+     "gold": "unsupported",
+     "pred": "supports"
+    }
+   ]
+  },
+  "full": {
+   "n": 24,
+   "accuracy": 0.75,
+   "per_class": {
+    "supports": {
+     "precision": 1.0,
+     "recall": 0.5555555555555556,
+     "f1": 0.7142857142857143,
+     "support": 9
+    },
+    "partial": {
+     "precision": 0.3333333333333333,
+     "recall": 0.5,
+     "f1": 0.4,
+     "support": 2
+    },
+    "unsupported": {
+     "precision": 0.75,
+     "recall": 0.9230769230769231,
+     "f1": 0.8275862068965517,
+     "support": 13
+    }
+   },
+   "macro_f1": 0.6472906403940887,
+   "weighted_f1": 0.7494663382594418,
+   "confusion_rowgold_colpred": {
+    "supports": {
+     "supports": 5,
+     "partial": 1,
+     "unsupported": 3
+    },
+    "partial": {
+     "supports": 0,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "unsupported": {
+     "supports": 0,
+     "partial": 1,
+     "unsupported": 12
+    }
+   },
+   "by_category_correct_total": {
+    "paraphrase": [
+     1,
+     3
+    ],
+    "partial": [
+     2,
+     3
+    ],
+    "rounding": [
+     2,
+     4
+    ],
+    "negation": [
+     3,
+     3
+    ],
+    "hedging": [
+     3,
+     3
+    ],
+    "multi_hop": [
+     2,
+     2
+    ],
+    "overstated": [
+     2,
+     3
+    ],
+    "adversarial_snapshot": [
+     3,
+     3
+    ]
+   },
+   "errors": [
+    {
+     "id": "1",
+     "cat": "paraphrase",
+     "gold": "supports",
+     "pred": "partial"
+    },
+    {
+     "id": "3",
+     "cat": "paraphrase",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "6",
+     "cat": "partial",
+     "gold": "partial",
+     "pred": "unsupported"
+    },
+    {
+     "id": "7",
+     "cat": "rounding",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "9",
+     "cat": "rounding",
+     "gold": "supports",
+     "pred": "unsupported"
+    },
+    {
+     "id": "21",
+     "cat": "overstated",
+     "gold": "unsupported",
+     "pred": "partial"
+    }
+   ]
+  }
+ },
+ "stage2_usage": {
+  "job_id": 22,
+  "provider_reported_tokens_in": 10256,
+  "provider_reported_tokens_out": 783,
+  "provider_reported_tokens": 11039,
+  "legacy_recorded_tokens": 0,
+  "unknown_usage_attempts": 0,
+  "unknown_usage_reserved_tokens": 0,
+  "estimated_input_tokens": 8634,
+  "budget_accounted_tokens": 11039,
+  "provider_attempts": 17,
+  "failed_attempts": 0,
+  "in_flight_or_interrupted_attempts": 0,
+  "cache_hits": 0,
+  "modeled_usd_reported": 0.00631,
+  "modeled_usd_legacy": 0.0,
+  "latency_ms": 15016,
+  "attempts_by_provider_model": [
+   {
+    "provider": "groq",
+    "model": "qwen/qwen3.8-27b",
+    "attempts": 17,
+    "provider_reported_tokens": 11039
+   }
+  ]
+ }
+}
