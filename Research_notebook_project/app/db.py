@@ -1,8 +1,11 @@
 # app/db.py
+import asyncio
 import os
 from collections.abc import AsyncGenerator
+
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
 from app.models import Base
 
 # Database connection URL
@@ -40,8 +43,29 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         finally:
             await session.close()
 
-# Helper to initialize pgvector & create tables on startup
+def run_alembic_migrations() -> None:
+    """Run alembic upgrade head."""
+    from alembic.config import Config
+
+    from alembic import command
+    base_dir = os.path.dirname(os.path.dirname(__file__))
+    alembic_ini_path = os.path.join(base_dir, "alembic.ini")
+    if os.path.exists(alembic_ini_path):
+        alembic_cfg = Config(alembic_ini_path)
+        alembic_cfg.set_main_option("sqlalchemy.url", DATABASE_URL)
+        command.upgrade(alembic_cfg, "head")
+
+# Helper to initialize pgvector & run migrations on startup
 async def init_db() -> None:
-    async with engine.begin() as conn:
-        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
-        await conn.run_sync(Base.metadata.create_all)
+    try:
+        async with engine.begin() as conn:
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+    except Exception:
+        pass
+
+    try:
+        await asyncio.to_thread(run_alembic_migrations)
+    except Exception:
+        # Fallback to create_all for test/isolated database setups
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)

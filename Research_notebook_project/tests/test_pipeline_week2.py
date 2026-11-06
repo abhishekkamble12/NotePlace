@@ -254,7 +254,7 @@ async def test_full_multi_mode_pipeline_lifecycle():
         empty_claims_res = MagicMock()
         empty_claims_res.scalars.return_value.all.return_value = []
         chunk_res = MagicMock()
-        chunk_res.all.return_value = [(10, "Google announced that Sycamore achieved quantum supremacy in 200 seconds.")]
+        chunk_res.all.return_value = [(5, 10, 0, "Google announced that Sycamore achieved quantum supremacy in 200 seconds.")]
         mock_db.execute.side_effect = [empty_claims_res, chunk_res]
 
         mock_draft_claim = Claim(

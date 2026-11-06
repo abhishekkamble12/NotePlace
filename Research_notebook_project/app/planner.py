@@ -1,8 +1,10 @@
 # app/planner.py
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.llm import call_llm
+
+from app.core.llm import call_llm
 from app.models import SubQuestion
+
 
 class ResearchPlan(BaseModel):
     subquestions: list[str] = Field(
@@ -35,14 +37,14 @@ async def generate_plan(
         {"role": "user", "content": f"Decompose this research question into 4 to 8 sub-questions:\n\"{main_question}\""}
     ]
 
-    _, plan = await call_llm(
-        db=db,
-        job_id=job_id,
+    plan = await call_llm(
+        scope=("job", job_id),
         phase="planning",
         model=planner_model,
         messages=messages,
         max_tokens=600,
-        schema=ResearchPlan
+        schema=ResearchPlan,
+        db=db
     )
 
     if not plan or not plan.subquestions:

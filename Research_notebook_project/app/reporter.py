@@ -1,7 +1,9 @@
 # app/reporter.py
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models import Job, SubQuestion, Source, Claim, LedgerEntry
+
+from app.models import Claim, Conflict, Job, LedgerEntry, Source, SubQuestion
+
 
 async def generate_markdown_report(db: AsyncSession, job_id: int) -> str:
     """
@@ -43,7 +45,7 @@ async def generate_markdown_report(db: AsyncSession, job_id: int) -> str:
             func.coalesce(func.sum(LedgerEntry.tokens_out), 0).label("tokens_out"),
             func.coalesce(func.sum(LedgerEntry.cost_usd_modeled), 0.0).label("cost_usd"),
             func.coalesce(func.sum(LedgerEntry.latency_ms), 0).label("latency_ms")
-        ).where(LedgerEntry.job_id == job_id)
+        ).where(LedgerEntry.scope_type == "job", LedgerEntry.scope_id == job_id)
     )
     ledger_row = ledger_res.one()
 
@@ -87,7 +89,23 @@ async def generate_markdown_report(db: AsyncSession, job_id: int) -> str:
 
     # 3. Where Sources Disagree
     report_lines.append("## 3. Where Sources Disagree\n")
-    report_lines.append("*Cross-source contradiction checks revealed no direct factual contradictions in verified claims.*\n")
+    conflicts_res = await db.execute(
+        select(Conflict).where(Conflict.job_id == job_id)
+    )
+    conflicts = conflicts_res.scalars().all()
+    if conflicts:
+        report_lines.append("| Source A Claim | Source B Claim | Disagreement Analysis |")
+        report_lines.append("|---|---|---|")
+        for conf in conflicts:
+            c_a = next((c for c in kept_claims if c.id == conf.claim_a_id), None)
+            c_b = next((c for c in kept_claims if c.id == conf.claim_b_id), None)
+            txt_a = (c_a.text if c_a else f"Claim #{conf.claim_a_id}").replace("|", "\\|")
+            txt_b = (c_b.text if c_b else f"Claim #{conf.claim_b_id}").replace("|", "\\|")
+            note = (conf.note or "Contradictory findings detected").replace("|", "\\|")
+            report_lines.append(f"| {txt_a} | {txt_b} | {note} |")
+        report_lines.append("")
+    else:
+        report_lines.append("*Cross-source contradiction checks revealed no direct factual contradictions in verified claims.*\n")
 
     # 4. Evidence Gaps & Thin Evidence
     report_lines.append("## 4. Evidence Gaps & Limitations\n")
@@ -138,7 +156,7 @@ async def generate_markdown_report(db: AsyncSession, job_id: int) -> str:
     report_lines.append(f"- **Token Budget Used:** {total_tokens:,} / {job.max_tokens:,} ({(total_tokens / max(1, job.max_tokens)) * 100:.1f}%)")
     report_lines.append(f"- **Modeled USD Spend:** ${cost_usd:.4f}")
     report_lines.append(f"- **Total Elapsed Time:** {latency_sec:.2f} seconds")
-    report_lines.append(f"- **Models Used:** Writer (`llama-3.3-70b-versatile`), Verifier (`gemma2-9b-it`)")
+    report_lines.append("- **Models Used:** Writer (`llama-3.3-70b-versatile`), Verifier (`gemma2-9b-it`)")
 
     markdown = "\n".join(report_lines)
     job.report_md = markdown

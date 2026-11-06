@@ -1,14 +1,16 @@
 # tests/test_citeguard.py
 import pytest
-from app.fetcher import validate_url_security, SSRFSecurityError, chunk_text
-from app.verifier import normalize_text, check_quote_in_snapshot
+
+from app.fetcher import SSRFSecurityError, chunk_text, validate_url_security
 from app.llm import (
-    estimate_prompt_tokens,
     calculate_modeled_usd,
+    estimate_prompt_tokens,
     get_cache_key,
+    read_from_cache,
     write_to_cache,
-    read_from_cache
 )
+from app.verifier import check_quote_in_snapshot, normalize_text
+
 
 def test_ssrf_blocks_private_and_loopback_ips():
     """Verify that private, loopback, and metadata IPs are rejected."""
@@ -86,3 +88,23 @@ def test_token_estimation_and_cost_math():
     # 0.00059 + 0.00079 = 0.00138
     assert abs(cost - 0.00138) < 1e-5
 
+
+
+def test_verifier_benchmark_testset_integrity():
+    """Verify that the verifier test set exists and contains 150 items with proper labels."""
+    import csv
+    from pathlib import Path
+
+    csv_path = Path(__file__).resolve().parents[1] / "evals" / "verifier_testset.csv"
+    assert csv_path.exists(), "evals/verifier_testset.csv must exist"
+
+    with open(csv_path, encoding="utf-8") as f:
+        reader = list(csv.DictReader(f))
+
+    assert len(reader) >= 150
+    types = {row["perturbation_type"] for row in reader}
+    assert "original" in types
+    assert "number" in types
+    assert "date" in types
+    assert "overgeneralize" in types
+    assert "entity" in types

@@ -1,6 +1,8 @@
 # app/worker.py
 import os
+
 from arq.connections import RedisSettings
+
 from app.db import init_db
 from app.pipeline import execute_research_job
 
@@ -14,7 +16,6 @@ async def startup(ctx: dict) -> None:
 
 async def shutdown(ctx: dict) -> None:
     """Clean shutdown handler."""
-    pass
 
 async def run_job_task(ctx: dict, job_id: int) -> None:
     """Worker task wrapper for research jobs."""
