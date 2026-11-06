@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.embeddings import embed_texts
 from app.core.fetcher import chunk_spans, fetch_url_snapshot
-from app.core.llm import PHASE_BUDGET_SHARES
+from app.core.llm import PHASE_BUDGET_SHARES, spend_expr
 from app.core.search import search_web
 from app.core.verifier import DETERMINISTIC_DROP_CODES, rewrite_claim, verify_claim
 from app.db import AsyncSessionLocal
@@ -30,11 +30,11 @@ async def check_budget_ok(db: AsyncSession, job_id: int, phase: str, max_tokens:
     res = await db.execute(
         select(
             func.coalesce(
-                func.sum(LedgerEntry.tokens_in + LedgerEntry.tokens_out).filter(LedgerEntry.cache_hit.is_(False)),
+                func.sum(spend_expr()).filter(LedgerEntry.cache_hit.is_(False)),
                 0
             ).label("total"),
             func.coalesce(
-                func.sum(LedgerEntry.tokens_in + LedgerEntry.tokens_out).filter(
+                func.sum(spend_expr()).filter(
                     LedgerEntry.phase == phase,
                     LedgerEntry.cache_hit.is_(False)
                 ),

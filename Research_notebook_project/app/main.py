@@ -19,6 +19,8 @@ from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.staticfiles import StaticFiles
 
+from app.core.accounting import ledger_summary
+from app.core.verifier import require_evidence_key
 from app.db import get_db, init_db
 from app.models import Claim, Job, LedgerEntry
 from app.pipeline import execute_research_job
@@ -27,6 +29,7 @@ from app.pipeline import execute_research_job
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Runs when server starts: ensures pgvector & database setup
+    require_evidence_key()
     await init_db()
     yield
 
@@ -89,13 +92,7 @@ async def get_job_status(job_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
 
     # Aggregate spend from ledger using scope_type and scope_id
-    ledger_res = await db.execute(
-        select(
-            func.coalesce(func.sum(LedgerEntry.tokens_in + LedgerEntry.tokens_out), 0).label("tokens_used"),
-            func.coalesce(func.sum(LedgerEntry.cost_usd_modeled), 0.0).label("usd_spent")
-        ).where(LedgerEntry.scope_type == "job", LedgerEntry.scope_id == job_id)
-    )
-    tokens_used, usd_spent = ledger_res.one()
+    usage = await ledger_summary(db, "job", job_id)
 
     # Count claims progress
     claims_res = await db.execute(
@@ -112,9 +109,10 @@ async def get_job_status(job_id: int, db: AsyncSession = Depends(get_db)):
         "status": job.status,
         "stage": job.stage,
         "mode": job.mode,
-        "tokens_spent": int(tokens_used),
+        "tokens_spent": usage["budget_accounted_tokens"],  # budget-accounted (reported + retained reservations), not provider-reported
         "tokens_budget": job.max_tokens,
-        "usd_spent": float(usd_spent),
+        "usd_spent": usage["modeled_usd_reported"] + usage["modeled_usd_legacy"],  # modeled at list price
+        "usage": usage,
         "total_claims": total_claims,
         "verified_claims": kept_claims,
         "created_at": job.created_at
@@ -172,6 +170,13 @@ async def get_job_ledger(job_id: int, db: AsyncSession = Depends(get_db)):
             "cost_usd_modeled": float(e.cost_usd_modeled),
             "latency_ms": e.latency_ms,
             "cache_hit": e.cache_hit,
+            "usage_provenance": e.usage_provenance,  # reported | unknown | legacy; tokens_* are 0 when unknown
+            "usage_known": e.usage_known,
+            "status": e.status,
+            "provider": e.provider,
+            "call_id": e.call_id,
+            "reserved_tokens": e.reserved_tokens,
+            "est_tokens_in": e.est_tokens_in,
             "created_at": e.created_at
         }
         for e in entries

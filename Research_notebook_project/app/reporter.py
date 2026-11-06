@@ -1,8 +1,9 @@
 # app/reporter.py
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Claim, Conflict, Job, LedgerEntry, Source, SubQuestion
+from app.core.accounting import ledger_summary
+from app.models import Claim, Conflict, Job, Source, SubQuestion
 
 
 async def generate_markdown_report(db: AsyncSession, job_id: int) -> str:
@@ -39,15 +40,7 @@ async def generate_markdown_report(db: AsyncSession, job_id: int) -> str:
     sources = {s.id: s for s in sources_res.scalars().all()}
 
     # Fetch ledger summary
-    ledger_res = await db.execute(
-        select(
-            func.coalesce(func.sum(LedgerEntry.tokens_in), 0).label("tokens_in"),
-            func.coalesce(func.sum(LedgerEntry.tokens_out), 0).label("tokens_out"),
-            func.coalesce(func.sum(LedgerEntry.cost_usd_modeled), 0.0).label("cost_usd"),
-            func.coalesce(func.sum(LedgerEntry.latency_ms), 0).label("latency_ms")
-        ).where(LedgerEntry.scope_type == "job", LedgerEntry.scope_id == job_id)
-    )
-    ledger_row = ledger_res.one()
+    usage = await ledger_summary(db, "job", job_id)
 
     kept_claims = [c for c in all_claims if c.final_status == "kept"]
     dropped_claims = [c for c in all_claims if c.final_status == "dropped"]
@@ -145,17 +138,37 @@ async def generate_markdown_report(db: AsyncSession, job_id: int) -> str:
     report_lines.append("\n")
 
     # 7. Run Metadata
-    tokens_in = ledger_row.tokens_in
-    tokens_out = ledger_row.tokens_out
-    total_tokens = tokens_in + tokens_out
-    cost_usd = float(ledger_row.cost_usd)
-    latency_sec = ledger_row.latency_ms / 1000.0
+
+    latency_sec = usage["latency_ms"] / 1000.0
+    accounted = usage["budget_accounted_tokens"]
 
     report_lines.append("## 7. Run Metadata & Cost Ledger\n")
-    report_lines.append(f"- **Total Tokens:** {total_tokens:,} ({tokens_in:,} input, {tokens_out:,} output)")
-    report_lines.append(f"- **Token Budget Used:** {total_tokens:,} / {job.max_tokens:,} ({(total_tokens / max(1, job.max_tokens)) * 100:.1f}%)")
-    report_lines.append(f"- **Modeled USD Spend:** ${cost_usd:.4f}")
-    report_lines.append(f"- **Total Elapsed Time:** {latency_sec:.2f} seconds")
+    report_lines.append(
+        f"- **Provider-Reported Tokens:** {usage['provider_reported_tokens']:,} "
+        f"({usage['provider_reported_tokens_in']:,} input, {usage['provider_reported_tokens_out']:,} output)"
+    )
+    if usage["legacy_recorded_tokens"]:
+        report_lines.append(
+            f"- **Legacy Recorded Tokens:** {usage['legacy_recorded_tokens']:,} (written before usage provenance was tracked; "
+            "may include local estimates)"
+        )
+    report_lines.append(
+        f"- **Attempts With Unknown Usage:** {usage['unknown_usage_attempts']} "
+        f"(provider reported no usage; {usage['unknown_usage_reserved_tokens']:,} tokens reserved and charged to the budget, not known to be spent)"
+    )
+    report_lines.append(f"- **Estimated Input Tokens (local estimate, not provider usage):** {usage['estimated_input_tokens']:,}")
+    report_lines.append(
+        f"- **Token Budget Accounted:** {accounted:,} / {job.max_tokens:,} ({(accounted / max(1, job.max_tokens)) * 100:.1f}%) "
+        "- provider-reported + legacy + retained reservations"
+    )
+    report_lines.append(
+        f"- **Provider Attempts:** {usage['provider_attempts']} ({usage['failed_attempts']} failed, "
+        f"{usage['in_flight_or_interrupted_attempts']} interrupted); cache hits: {usage['cache_hits']} (excluded from spend)"
+    )
+    report_lines.append(f"- **Modeled USD Spend (list price, provider-reported tokens only):** ${usage['modeled_usd_reported']:.4f}")
+    if usage["modeled_usd_legacy"]:
+        report_lines.append(f"- **Modeled USD, Legacy Rows (unverified):** ${usage['modeled_usd_legacy']:.4f}")
+    report_lines.append(f"- **Total Elapsed Time (summed provider latency):** {latency_sec:.2f} seconds")
     report_lines.append("- **Models Used:** Writer (`llama-3.3-70b-versatile`), Verifier (`gemma2-9b-it`)")
 
     markdown = "\n".join(report_lines)

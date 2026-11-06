@@ -34,6 +34,7 @@ services:
       - DATABASE_URL=postgresql+asyncpg://citeguard:citeguard_password@postgres:5432/citeguard
       - REDIS_URL=redis://redis:6379
       - GROQ_API_KEY=${GROQ_API_KEY}
+      - CITEGUARD_EVIDENCE_HMAC_KEY=${CITEGUARD_EVIDENCE_HMAC_KEY:?set CITEGUARD_EVIDENCE_HMAC_KEY in .env}
     depends_on:
       postgres:
         condition: service_healthy
@@ -47,6 +48,7 @@ services:
       - DATABASE_URL=postgresql+asyncpg://citeguard:citeguard_password@postgres:5432/citeguard
       - REDIS_URL=redis://redis:6379
       - GROQ_API_KEY=${GROQ_API_KEY}
+      - CITEGUARD_EVIDENCE_HMAC_KEY=${CITEGUARD_EVIDENCE_HMAC_KEY:?set CITEGUARD_EVIDENCE_HMAC_KEY in .env}
     depends_on:
       postgres:
         condition: service_healthy

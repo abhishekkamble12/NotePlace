@@ -21,9 +21,10 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from pydantic import BaseModel, Field
 
-from app.core.verifier import verify_claim
+from app.core.accounting import ledger_summary
+from app.core.verifier import require_evidence_key, verify_claim
 from app.db import AsyncSessionLocal, init_db
-from app.models import Claim, Job, LedgerEntry
+from app.models import Claim, Job
 from app.pipeline import execute_research_job
 from mcp.server.mcpserver import MCPServer
 
@@ -79,15 +80,15 @@ async def research(
         claims = claims_res.scalars().all()
 
         # Fetch ledger stats
-        ledger_res = await db.execute(select(LedgerEntry).where(LedgerEntry.scope_id == job_id))
-        ledger_entries = ledger_res.scalars().all()
-        total_tokens = sum(e.tokens_in + e.tokens_out for e in ledger_entries)
-        total_cost = sum(float(e.cost_usd_modeled) for e in ledger_entries)
+        usage = await ledger_summary(db, "job", job_id)
+        total_tokens = usage["budget_accounted_tokens"]
+        total_cost = usage["modeled_usd_reported"] + usage["modeled_usd_legacy"]
 
     payload = {
         "job_id": job_id,
         "status": final_job.status if final_job else result_state.get("status"),
-        "total_tokens_used": total_tokens,
+        "total_tokens_used": total_tokens,  # budget-accounted; see "usage" for the reported/unknown split
+        "usage": usage,
         "modeled_usd": round(total_cost, 4),
         "total_claims": len(claims),
         "kept_claims": sum(1 for c in claims if c.final_status == "kept"),
@@ -158,6 +159,7 @@ async def verify_quote(
 
 def main():
     """Runs the MCP server via stdio for MCP clients."""
+    require_evidence_key()
     mcp_server.run()
 
 

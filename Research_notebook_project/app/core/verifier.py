@@ -9,6 +9,8 @@ Stage 2 (LLM entailment, different model family): sees ONLY the snapshot-resolve
 "Verified" means "attributed to a source span", not "true".
 """
 import hashlib
+import hmac
+import os
 import re
 import unicodedata
 from typing import Literal
@@ -194,9 +196,29 @@ Verdicts:
 Be strict. Respond with JSON only: {"verdict": "...", "reason": "..."} and no other keys."""
 
 
+class EvidenceKeyMissingError(RuntimeError):
+    """CITEGUARD_EVIDENCE_HMAC_KEY is unset: refuse to build prompts rather than use a guessable delimiter."""
+
+
+def require_evidence_key() -> None:
+    """Startup check for every entry point that can run Stage 2 (API, worker, MCP). Raises a clear configuration
+    error instead of running a service that silently drops every claim. verify_claim still fails closed per call."""
+    if not os.environ.get("CITEGUARD_EVIDENCE_HMAC_KEY"):
+        raise EvidenceKeyMissingError(
+            "CITEGUARD_EVIDENCE_HMAC_KEY is not set. Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
+        )
+
+
 def _fence(*parts: str) -> str:
-    """Delimiter derived from the content hash: deterministic (cache-friendly) and the content cannot contain it."""
-    return "DATA-" + hashlib.sha256("\x00".join(parts).encode("utf-8")).hexdigest()[:16]
+    """Delimiter = HMAC-SHA256(secret key, length-prefixed parts). Deterministic for a given key and content
+    (cache-friendly), but an attacker who does not know the key cannot predict it, so text inside the data
+    cannot forge an END marker. This blocks predictable delimiter spoofing only; it does NOT stop prompt injection
+    that stays inside the data block. The key is read per call, never logged, never committed."""
+    key = os.environ.get("CITEGUARD_EVIDENCE_HMAC_KEY", "")
+    if not key:
+        raise EvidenceKeyMissingError("CITEGUARD_EVIDENCE_HMAC_KEY is not set")
+    msg = b"".join(len(p.encode()).to_bytes(8, "big") + p.encode() for p in parts)
+    return "DATA-" + hmac.new(key.encode(), msg, hashlib.sha256).hexdigest()[:24]
 
 
 def build_entailment_messages(claim_text: str, span: str, context: str) -> list[dict[str, str]]:
@@ -256,10 +278,13 @@ async def verify_claim(
 
     context = snapshot[max(0, s - CONTEXT_WINDOW_CHARS): min(len(snapshot), e + CONTEXT_WINDOW_CHARS)].strip()
     try:
+        messages = build_entailment_messages(claim_text, span, context)
+    except EvidenceKeyMissingError:
+        return _drop("verifier_unconfigured", "Evidence HMAC key not configured; dropped (fail closed)", True, score, (s, e))
+    try:
         parsed = await call_llm(
             scope=("job", job_id), phase="verifying", model=verifier_model,
-            messages=build_entailment_messages(claim_text, span, context),
-            max_tokens=250, schema=EntailmentVerdict, db=db,
+            messages=messages, max_tokens=250, schema=EntailmentVerdict, db=db,
         )
     except ValidationError:
         return _drop("verifier_invalid_output", "Verifier returned invalid output twice; dropped (fail closed)", True, score, (s, e))
@@ -308,7 +333,10 @@ async def rewrite_claim(
     writer_model: str = "llama-3.3-70b-versatile",
 ) -> str | None:
     """Single rewrite attempt of a partially supported claim. `quote` must be the snapshot-resolved span."""
-    f = _fence(original_claim, quote, critique_reason)
+    try:
+        f = _fence(original_claim, quote, critique_reason)
+    except EvidenceKeyMissingError:
+        return None
     user_prompt = (
         f"<<<{f} ORIGINAL CLAIM>>>\n{original_claim}\n<<<END {f}>>>\n\n"
         f"<<<{f} SOURCE SPAN>>>\n{quote}\n<<<END {f}>>>\n\n"

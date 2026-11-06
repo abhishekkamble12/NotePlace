@@ -104,7 +104,7 @@ async def test_prompt_isolates_untrusted_snapshot():
     with patch("app.core.verifier.call_llm", mock):
         await verify_claim(None, 1, "Acme reported 33.9% efficiency.", "", snap, start=s, end=len(snap))
     msgs = mock.call_args.kwargs["messages"]
-    fence = re.search(r"<<<(DATA-[0-9a-f]{16}) CLAIM>>>", msgs[1]["content"]).group(1)
+    fence = re.search(r"<<<(DATA-[0-9a-f]+) CLAIM>>>", msgs[1]["content"]).group(1)
     assert msgs[1]["content"].count(f"<<<{fence} ") == 3 and msgs[1]["content"].count(f"<<<END {fence}>>>") == 3
     assert "untrusted" in msgs[0]["content"].lower()
 

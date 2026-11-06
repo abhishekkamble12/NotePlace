@@ -9,14 +9,16 @@ import hashlib
 import json
 import os
 import time
+import uuid
 from collections.abc import Callable, Coroutine
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, TypeVar
 
 from groq import AsyncGroq
 from pydantic import BaseModel, ValidationError
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import AsyncSessionLocal
@@ -142,23 +144,67 @@ async def _call_provider(
     return data["choices"][0]["message"].get("content") or "", usage.get("prompt_tokens"), usage.get("completion_tokens")
 
 
+@dataclass
+class Attempt:
+    """One provider request. tokens_* are provider-reported or None (unknown); never an estimate."""
+    provider: str
+    model: str
+    ok: bool
+    tokens_in: int | None = None
+    tokens_out: int | None = None
+    latency_ms: int = 0
+
+
+def usage_from_error(e: BaseException) -> tuple[int | None, int | None]:
+    """Provider-reported usage attached to a failed attempt (e.usage, or a JSON error body with "usage"); else unknown."""
+    u = getattr(e, "usage", None)
+    if u is None:
+        try:
+            u = e.response.json().get("usage")  # type: ignore[attr-defined]
+        except Exception:
+            u = None
+    if isinstance(u, dict):
+        pt, ct = u.get("prompt_tokens"), u.get("completion_tokens")
+        if isinstance(pt, int) and isinstance(ct, int):
+            return pt, ct
+    return None, None
+
+
 async def _complete_with_failover(
-    model: str, messages: list[dict[str, str]], max_tokens: int, response_format: dict | None
+    model: str, messages: list[dict[str, str]], max_tokens: int, response_format: dict | None,
+    attempts: list[Attempt] | None = None,
+    reserver: "AttemptReserver | None" = None,
 ) -> tuple[str, int | None, int | None, str]:
-    """Try each provider in order, skipping open breakers. Returns (text, tin, tout, model_actually_used)."""
+    """Try each provider in order, skipping open breakers. Every request actually made is appended to `attempts`
+    (failed ones too, with any usage the provider reported). Returns (text, tin, tout, model_actually_used)."""
     last_err: Exception | None = None
+    attempts = attempts if attempts is not None else []
     for spec in get_provider_chain(model):
         key = f"{spec['provider']}:{spec['model']}"
         if not breaker.allow(key):
             continue
+        # Reserve BEFORE the request. If the process dies or is cancelled mid-request, the 'reserved' row stays
+        # and keeps charging its reservation (unknown usage is never assumed to be zero).
+        row = await reserver.begin(spec["provider"], spec["model"], estimate_prompt_tokens(messages) + max_tokens,
+                                   estimate_prompt_tokens(messages)) if reserver else None
+        t0 = time.time()
         try:
             text, tin, tout = await asyncio.wait_for(
                 _call_provider(spec, messages, max_tokens, response_format), PROVIDER_TIMEOUT_S
             )
         except Exception as e:  # 429, 5xx, timeout, network: fail over to the next provider
+            fin, fout = usage_from_error(e)
+            att = Attempt(spec["provider"], spec["model"], False, fin, fout, int((time.time() - t0) * 1000))
+            attempts.append(att)
+            if reserver:
+                await reserver.finish(row, att)
             breaker.record_failure(key)
             last_err = e
             continue
+        att = Attempt(spec["provider"], spec["model"], True, tin, tout, int((time.time() - t0) * 1000))
+        attempts.append(att)
+        if reserver:
+            await reserver.finish(row, att)
         breaker.record_success(key)
         return text, tin, tout, spec["model"]
     raise ProviderUnavailableError(f"All providers failed or are open-circuit for '{model}': {last_err!r}")
@@ -263,22 +309,75 @@ def calculate_modeled_usd(model: str, tokens_in: int, tokens_out: int) -> float:
     return (tokens_in / 1000.0) * pricing["input"] + (tokens_out / 1000.0) * pricing["output"]
 
 
+def spend_expr():
+    """Tokens charged against the budget per non-cache row: provider-reported usage when known, otherwise the full
+    reservation is retained (conservative). Reported and reserved are never added together for the same row."""
+    return case(
+        (LedgerEntry.usage_known.is_(True), LedgerEntry.tokens_in + LedgerEntry.tokens_out),
+        else_=LedgerEntry.reserved_tokens,
+    )
+
+
+def apply_attempt(row: LedgerEntry, att: Attempt) -> None:
+    """Reconcile a reservation row with what the provider actually reported (or did not)."""
+    known = att.tokens_in is not None and att.tokens_out is not None
+    row.tokens_in, row.tokens_out = att.tokens_in or 0, att.tokens_out or 0
+    row.usage_known = known
+    row.usage_provenance = "reported" if known else "unknown"
+    # modeled USD only from provider-reported tokens; unknown usage is not priced
+    row.cost_usd_modeled = calculate_modeled_usd(att.model, row.tokens_in, row.tokens_out) if known else 0.0
+    row.latency_ms = att.latency_ms
+    row.status = "ok" if att.ok else "failed"
+
+
+class AttemptReserver:
+    """Per provider attempt: (1) under a job-row lock, check the caps against everything already charged (including
+    other in-flight reservations) and insert a 'reserved' ledger row, commit (lock released); (2) after the request,
+    overwrite that row with the provider-reported usage. Two concurrent calls therefore cannot both pass the cap check
+    on the same headroom: the second one sees the first one's reservation."""
+
+    def __init__(self, session: AsyncSession, scope: tuple[str, int], phase: str, call_id: str):
+        self.session, self.scope, self.phase, self.call_id = session, scope, phase, call_id
+
+    async def begin(self, provider: str, model: str, reserved: int, est_in: int) -> LedgerEntry:
+        try:
+            await check_budget_caps(self.session, self.scope, self.phase, reserved, lock=True)
+            row = LedgerEntry(
+                scope_type=self.scope[0], scope_id=self.scope[1], phase=self.phase, kind="llm", model=model,
+                tokens_in=0, tokens_out=0, cost_usd_modeled=0.0, latency_ms=0, cache_hit=False,
+                usage_known=False, usage_provenance="unknown", reserved_tokens=reserved, est_tokens_in=est_in,
+                status="reserved", provider=provider, call_id=self.call_id,
+            )
+            self.session.add(row)
+            await self.session.commit()  # also releases the job-row lock
+        except BaseException:
+            await self.session.rollback()  # never leave the job-row lock held
+            raise
+        return row
+
+    async def finish(self, row: LedgerEntry, att: Attempt) -> None:
+        apply_attempt(row, att)
+        await self.session.commit()
+
+
 async def check_budget_caps(
     db: AsyncSession,
     scope: tuple[str, int],
     phase: str,
-    estimated_tokens: int
+    estimated_tokens: int,
+    lock: bool = False,
 ) -> tuple[Any, int]:
     """
     Pre-call guard: verifies both job token budget and phase token cap.
     Raises BudgetExceededError before calling the model if cap is exceeded.
+    Spend = provider-reported tokens where known, else the retained reservation (see spend_expr).
     """
     scope_type, scope_id = scope
     if scope_type != "job":
         # For Phase 2 notebooks, if a token_budget is tracked
         return None, 100_000
 
-    job = await db.get(Job, scope_id)
+    job = await db.get(Job, scope_id, with_for_update=lock)  # lock=True serialises reservations per job
     if not job:
         raise ValueError(f"Job {scope_id} not found")
 
@@ -290,11 +389,11 @@ async def check_budget_caps(
     result = await db.execute(
         select(
             func.coalesce(
-                func.sum(LedgerEntry.tokens_in + LedgerEntry.tokens_out).filter(LedgerEntry.cache_hit.is_(False)),
+                func.sum(spend_expr()).filter(LedgerEntry.cache_hit.is_(False)),
                 0
             ).label("total_tokens"),
             func.coalesce(
-                func.sum(LedgerEntry.tokens_in + LedgerEntry.tokens_out).filter(
+                func.sum(spend_expr()).filter(
                     LedgerEntry.phase == phase,
                     LedgerEntry.cache_hit.is_(False)
                 ),
@@ -338,7 +437,7 @@ async def call_llm(
       2. Sliding window rate limiter (TPM)
       3. Disk caching (costs 0 tokens, logged as cache_hit=True)
       4. Provider call (Groq) with optional Pydantic schema validation & 1 retry
-      5. Ledger entry insertion with latency, modeled USD, and token counts
+      5. One ledger row per provider attempt, reserved before the request and reconciled after it
     """
     if messages is None:
         messages = []
@@ -388,7 +487,8 @@ async def call_llm(
                 return raw_text, parsed_data
             return parsed_data if schema is not None else raw_text
 
-        # 2. Token estimation & Pre-call budget check
+        # 2. Token estimate & advisory pre-check (no lock). The binding, race-free check happens per provider
+        # attempt in AttemptReserver.begin, under a job-row lock.
         est_prompt_tokens = estimate_prompt_tokens(messages)
         est_total_tokens = est_prompt_tokens + max_tokens
         job, _ = await check_budget_caps(session, scope, phase, est_total_tokens)
@@ -407,24 +507,21 @@ async def call_llm(
                 "content": f"You must output valid JSON strictly adhering to this JSON schema:\n{json.dumps(schema.model_json_schema())}"
             })
 
-        # 5. Provider call with failover + breaker; one corrective retry on schema failure
+        # 5. Provider call with failover + breaker; one corrective retry on schema failure.
+        # Every provider request gets its own ledger row: reserved before the request, reconciled after it
+        # (failed attempts included). A crash in between leaves the 'reserved' row, which keeps charging its reservation.
         raw_text = ""
         parsed_obj: T | None = None
-        tokens_in = 0
-        tokens_out = 0
-        used_model = model
+        attempts: list[Attempt] = []
+        call_id = str(uuid.uuid4())
+        reserver = AttemptReserver(session, scope, phase, call_id)
         t0 = time.time()
-
         for attempt in range(2):
-            raw_text, t_in, t_out, used_model = await _complete_with_failover(
-                model, call_messages, max_tokens, response_format
+            raw_text, _, _, _ = await _complete_with_failover(
+                model, call_messages, max_tokens, response_format, attempts, reserver
             )
-            tokens_in += t_in if t_in is not None else estimate_prompt_tokens(call_messages)
-            tokens_out += t_out if t_out is not None else max(1, len(raw_text) // 4)
-
             if schema is None:
                 break
-
             try:
                 parsed_obj = schema.model_validate_json(raw_text)
                 break
@@ -439,32 +536,14 @@ async def call_llm(
                 else:
                     raise
 
-        total_latency_ms = int((time.time() - t0) * 1000)
-        modeled_usd = calculate_modeled_usd(used_model, tokens_in, tokens_out)
-
-        # 6. Save to disk cache
+        reported = [a for a in attempts if a.tokens_in is not None and a.tokens_out is not None]
         write_to_cache(cache_key, {
             "raw_text": raw_text,
             "parsed": parsed_obj.model_dump() if parsed_obj else None,
-            "tokens_in": tokens_in,
-            "tokens_out": tokens_out
+            "tokens_in": sum(a.tokens_in for a in reported),  # type: ignore[misc]
+            "tokens_out": sum(a.tokens_out for a in reported),  # type: ignore[misc]
+            "latency_ms": int((time.time() - t0) * 1000),
         })
-
-        # 7. Write atomic ledger row
-        ledger_entry = LedgerEntry(
-            scope_type=scope_type,
-            scope_id=scope_id,
-            phase=phase,
-            kind="llm",
-            model=used_model,
-            tokens_in=tokens_in,
-            tokens_out=tokens_out,
-            cost_usd_modeled=modeled_usd,
-            latency_ms=total_latency_ms,
-            cache_hit=False
-        )
-        session.add(ledger_entry)
-        await session.commit()
 
         if return_tuple:
             return raw_text, parsed_obj

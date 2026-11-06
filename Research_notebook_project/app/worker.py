@@ -3,6 +3,7 @@ import os
 
 from arq.connections import RedisSettings
 
+from app.core.verifier import require_evidence_key
 from app.db import init_db
 from app.pipeline import execute_research_job
 
@@ -12,6 +13,7 @@ REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
 
 async def startup(ctx: dict) -> None:
     """Initializes database schema and connections when worker boots."""
+    require_evidence_key()
     await init_db()
 
 async def shutdown(ctx: dict) -> None:

@@ -155,18 +155,16 @@ async def test_report_renderer_sections():
     conflict_res = MagicMock()
     conflict_res.scalars.return_value.all.return_value = []
 
-    # Mock ledger
-    ledger_row = MagicMock()
-    ledger_row.tokens_in = 5000
-    ledger_row.tokens_out = 800
-    ledger_row.cost_usd = 0.0042
-    ledger_row.latency_ms = 4500
-    ledger_res = MagicMock()
-    ledger_res.one.return_value = ledger_row
-
-    mock_db.execute.side_effect = [subq_res, claims_res, src_res, ledger_res, conflict_res]
-
-    report = await generate_markdown_report(mock_db, job_id=1)
+    # Ledger aggregation is covered by tests/test_reporting_accounting.py; here it is stubbed.
+    mock_db.execute.side_effect = [subq_res, claims_res, src_res, conflict_res]
+    usage = dict(
+        provider_reported_tokens_in=5000, provider_reported_tokens_out=800, provider_reported_tokens=5800,
+        legacy_recorded_tokens=0, unknown_usage_attempts=0, unknown_usage_reserved_tokens=0, estimated_input_tokens=5100,
+        budget_accounted_tokens=5800, provider_attempts=3, failed_attempts=0, in_flight_or_interrupted_attempts=0,
+        cache_hits=0, modeled_usd_reported=0.0042, modeled_usd_legacy=0.0, latency_ms=4500,
+    )
+    with patch("app.reporter.ledger_summary", AsyncMock(return_value=usage)):
+        report = await generate_markdown_report(mock_db, job_id=1)
 
     assert "## 1. Executive Summary" in report
     assert "## 2. Findings by Research Question" in report

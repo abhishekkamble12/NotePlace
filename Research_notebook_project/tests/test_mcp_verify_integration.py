@@ -41,7 +41,7 @@ class FakeSession:
     async def refresh(self, obj):
         return None
 
-    async def get(self, model, pk):
+    async def get(self, model, pk, **_):
         return next((o for o in self.store if isinstance(o, model) and o.id == pk), None)
 
     async def execute(self, stmt):

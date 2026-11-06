@@ -4,6 +4,7 @@ from datetime import datetime
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     DateTime,
     ForeignKey,
     Index,
@@ -13,6 +14,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
+    true,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -103,6 +105,9 @@ class LedgerEntry(Base):
     __tablename__ = "ledger"
     __table_args__ = (
         Index("ix_ledger_scope", "scope_type", "scope_id"),
+        # provenance 'unknown' <=> usage_known is false; 'reported' and 'legacy' rows carry counted tokens
+        CheckConstraint("(usage_provenance = 'unknown') = (NOT usage_known)", name="ck_ledger_provenance_known"),
+        CheckConstraint("usage_provenance IN ('reported', 'unknown', 'legacy')", name="ck_ledger_provenance_values"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -116,6 +121,17 @@ class LedgerEntry(Base):
     cost_usd_modeled: Mapped[float] = mapped_column(Numeric(8, 5), default=0.0)
     latency_ms: Mapped[int] = mapped_column(Integer, default=0)
     cache_hit: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Usage accounting. tokens_in/out are PROVIDER-REPORTED only (0 when usage_known is False).
+    # reserved_tokens is the pre-call reservation; est_tokens_in is the local estimator. Neither is actual usage.
+    # reported = provider usage fields; unknown = no usage reported (budget charges reserved_tokens);
+    # legacy = row written before migration 003: tokens may be provider-reported OR a local estimate, unverifiable.
+    usage_provenance: Mapped[str] = mapped_column(String(10), default="reported")
+    usage_known: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
+    reserved_tokens: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    est_tokens_in: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    status: Mapped[str] = mapped_column(String(10), default="ok", server_default="ok")  # "reserved" (in flight / crashed) | "ok" | "failed"
+    provider: Mapped[str] = mapped_column(String(30), default="", server_default="")
+    call_id: Mapped[str] = mapped_column(String(36), default="", server_default="")  # groups attempts of one call_llm call
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     @property

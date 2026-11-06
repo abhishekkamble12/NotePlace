@@ -41,10 +41,32 @@ RULES:
 4. No outside knowledge, no speculation. Never bundle several assertions into one claim."""
 
 
+# shortcut: fixed English list, no ML segmenter; add entries when a real draft mis-splits.
+_ABBREVIATIONS = frozenset({
+    "dr", "mr", "mrs", "ms", "prof", "sr", "jr", "st", "vs", "e.g", "i.e", "etc", "fig", "figs", "eq", "al",
+    "u.s", "u.k", "no", "approx", "inc", "ltd", "co", "corp", "dept", "vol", "pp", "ca", "cf",
+    "jan", "feb", "mar", "apr", "jun", "jul", "aug", "sep", "sept", "oct", "nov", "dec",
+})
+_LAST_TOKEN = re.compile(r"([A-Za-z](?:[A-Za-z.]*[A-Za-z])?)\.$")
+
+
+def _is_abbreviation_break(text: str, m: re.Match) -> bool:
+    """True if the split candidate `m` follows an abbreviation or a single-letter initial ("J. Smith")."""
+    if "\n" in m.group() or text[m.start() - 1:m.start()] != ".":
+        return False
+    t = _LAST_TOKEN.search(text[:m.start()])
+    if not t:
+        return False
+    tok = t.group(1).lower()
+    return tok in _ABBREVIATIONS or len(tok) == 1
+
+
 def sentence_spans(text: str) -> list[tuple[int, int]]:
     """(start, end) char offsets of sentences inside `text` (relative)."""
     spans, pos = [], 0
     for m in _SENT_SPLIT.finditer(text):
+        if _is_abbreviation_break(text, m):
+            continue
         if text[pos:m.start()].strip():
             spans.append((pos, m.start()))
         pos = m.end()

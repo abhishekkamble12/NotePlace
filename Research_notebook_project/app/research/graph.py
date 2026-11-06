@@ -11,6 +11,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from sqlalchemy import func, select
 
+from app.core.llm import spend_expr
 from app.db import AsyncSessionLocal
 from app.models import Job, LedgerEntry
 from app.research.nodes import (
@@ -43,7 +44,7 @@ async def check_budget_or_cancelled(state: ResearchGraphState) -> Literal["proce
         res = await db.execute(
             select(
                 func.coalesce(
-                    func.sum(LedgerEntry.tokens_in + LedgerEntry.tokens_out).filter(LedgerEntry.cache_hit.is_(False)),
+                    func.sum(spend_expr()).filter(LedgerEntry.cache_hit.is_(False)),
                     0
                 )
             ).where(LedgerEntry.scope_type == "job", LedgerEntry.scope_id == job_id)
