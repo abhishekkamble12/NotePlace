@@ -3,6 +3,11 @@
 CiteGuard Verifier Evaluation Harness (Week 1 / Spec §9.0).
 Measures precision, recall (catch rate), and false-drop rate on the benchmark test set.
 Can run against the database table verifier_testset or directly against evals/verifier_testset.csv.
+DATA KIND: the CSV is SYNTHETIC (hand-written fixtures), not genuine fetched pages or real drafts. Every report
+and run log is labeled data_kind="synthetic_fixture". Snapshot = the row's `context` passage (the stand-in source
+document); the citation is resolved to {start, end} offsets in it the same way the pipeline does (locate_quote),
+and verify_claim is then called by reference, so Stage 1 (offsets, fact-token check) is exercised, not bypassed.
+Rows whose quote cannot be located are counted as citation failures, never skipped.
 WARNING: this script calls a live provider (Groq) through call_llm. Results on the current
 175-pair set are NOT credible evidence: the set is hand-written, easy, and the prompt was
 tuned on it (see AUDIT.md). No baseline or CI gate exists.
@@ -21,7 +26,7 @@ from unittest.mock import AsyncMock, MagicMock
 # Add project root to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.core.verifier import VERIFIER_SYSTEM_PROMPT, verify_claim
+from app.core.verifier import VERIFIER_SYSTEM_PROMPT, locate_quote, verify_claim
 from app.models import Job, VerifierTestSet
 
 CSV_PATH = Path(__file__).resolve().parents[1] / "evals" / "verifier_testset.csv"
@@ -93,15 +98,22 @@ async def run_evaluation(csv_only: bool = False, limit: int | None = None, model
     mock_db.add = MagicMock()
     mock_db.get.return_value = Job(id=999, max_tokens=1_000_000)
 
+    print("  DATA: SYNTHETIC fixtures (hand-written); not genuine pages or real drafts\n")
     rows = []  # (item, predicted verdict, match score)
+    unresolved = 0
     for i, item in enumerate(items, 1):
+        loc = locate_quote(item["quote"], item["context"])
+        if loc is None:  # citation failure: counts as a dropped (unsupported) prediction
+            unresolved += 1
         res = await verify_claim(
             db=mock_db,
             job_id=999,
             claim_text=item["claim"],
             quote=item["quote"],
-            snapshot=item['context'] + chr(10) + item['quote'],
+            snapshot=item["context"],
             verifier_model=model,
+            start=loc[0] if loc else 0,
+            end=loc[1] if loc else 0,  # (0, 0) is an invalid ref -> dropped as invalid_citation_ref
         )
         rows.append((item, res.verdict, res.match_score))
         if res.verdict != item["label"]:
@@ -114,7 +126,8 @@ async def run_evaluation(csv_only: bool = False, limit: int | None = None, model
     summary = {name: report(name, rs) for name, rs in splits.items() if rs}
 
     RUNS_DIR.mkdir(exist_ok=True)
-    log = {"model": model, "n": len(rows), "summary": summary,
+    print(f"\nCitation failures (quote not locatable in snapshot): {unresolved}/{len(rows)}")
+    log = {"data_kind": "synthetic_fixture", "unresolved_citations": unresolved, "model": model, "n": len(rows), "summary": summary,
            "prompt_sha": hashlib.sha1(VERIFIER_SYSTEM_PROMPT.encode()).hexdigest()[:8]}
     (RUNS_DIR / f"{log['prompt_sha']}_{model.replace('/', '_')}.json").write_text(json.dumps(log, indent=2))
 
