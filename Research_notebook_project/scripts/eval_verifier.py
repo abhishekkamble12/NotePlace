@@ -83,7 +83,7 @@ async def load_test_items(csv_only: bool = False, limit: int | None = None) -> l
     return items
 
 
-async def run_evaluation(csv_only: bool = False, limit: int | None = None, model: str = "gemma2-9b-it", baseline: str = ""):
+async def run_evaluation(csv_only: bool = False, limit: int | None = None, model: str = "qwen/qwen3.8-27b", baseline: str = ""):
     items = await load_test_items(csv_only=csv_only, limit=limit)
 
     if not items:
@@ -192,7 +192,7 @@ if __name__ == "__main__":
     parser.add_argument("--csv-only", action="store_true", help="Load directly from CSV without DB")
     parser.add_argument("--limit", type=int, default=None, help="Limit number of items to evaluate")
     parser.add_argument("--baseline", choices=["fuzzy"], default="", help="Run a no-LLM baseline instead of the verifier")
-    parser.add_argument("--model", type=str, default="gemma2-9b-it", help="Model to evaluate")
+    parser.add_argument("--model", type=str, default="qwen/qwen3.8-27b", help="Model to evaluate")
     args = parser.parse_args()
 
     asyncio.run(run_evaluation(csv_only=args.csv_only, limit=args.limit, model=args.model, baseline=args.baseline))

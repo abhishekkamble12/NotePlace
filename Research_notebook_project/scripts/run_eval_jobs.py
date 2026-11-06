@@ -10,12 +10,16 @@ Usage: python scripts/run_eval_jobs.py --split dev [--only q1,q5] [--yes]
 """
 import argparse
 import asyncio
+import hashlib
 import json
 import os
+import subprocess
 import sys
 import tempfile
+from datetime import UTC, datetime
 from pathlib import Path
 
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # app print() of non-cp1252 text crashed jobs on Windows
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
@@ -67,6 +71,19 @@ async def export_job(qid: str, job_id: int) -> dict:
     }
 
 
+def provenance(split: str, qid: str) -> dict:
+    """Run provenance. Models are the code defaults (not yet selectable by flag); temperature is whatever call_llm uses."""
+    from app.core.verifier import VERIFIER_SYSTEM_PROMPT
+
+    git = lambda *a: subprocess.run(["git", *a], capture_output=True, text=True, cwd=ROOT).stdout.strip()  # noqa: E731
+    qfile = ROOT / "evals" / "benchmark_questions.json"
+    return {"split": split, "qid": qid, "git_commit": git("rev-parse", "HEAD"), "git_dirty": bool(git("status", "--porcelain")),
+            "questions_sha256": hashlib.sha256(qfile.read_bytes()).hexdigest(),
+            "verifier_prompt_sha": hashlib.sha1(VERIFIER_SYSTEM_PROMPT.encode()).hexdigest()[:8],
+            "writer_model": "openai/gpt-oss-120b", "verifier_model": "qwen/qwen3.8-27b", "search": "tavily->brave->fallback list",
+            "mode": "shadow", "cache": "fresh empty dir (no replay)", "finished_utc": datetime.now(UTC).isoformat()}
+
+
 async def main(split: str, yes: bool, only: str = "") -> None:
     qs = {q["id"]: q["question"] for q in json.loads((ROOT / "evals" / "benchmark_questions.json").read_text(encoding="utf-8"))}
     ids = [i for i in SPLITS[split] if not only or i in only.split(",")]
@@ -76,6 +93,9 @@ async def main(split: str, yes: bool, only: str = "") -> None:
         n = len(ids)
         print(f"ESTIMATE (not measured): ~{35 * n}k-{45 * n}k tokens, ~${0.01 * n:.2f}-${0.02 * n:.2f} modeled, "
               f"~{4 * n}-{8 * n} Tavily searches; hard stop at ${USD_STOP} modeled")
+        print(f"ESTIMATE LLM calls (not measured): plan {n} + write {4 * n}-{8 * n} + verify ~{16 * n}-{32 * n} + rewrites; "
+              f"each job also capped at {MAX_TOKENS} tokens / {MAX_MINUTES} min")
+        print("needs: GROQ_API_KEY, TAVILY_API_KEY in .env, a reachable Postgres (init_db); finished jobs are skipped on rerun (resume)")
         print("dry run; pass --yes to execute")
         return
     load_env()
@@ -100,9 +120,18 @@ async def main(split: str, yes: bool, only: str = "") -> None:
             db.add(job)
             await db.commit()
             job_id = job.id
-        await execute_research_job(job_id)
-        data = await export_job(qid, job_id)
+        try:
+            await execute_research_job(job_id)
+            data = await export_job(qid, job_id)
+            if data["status"] == "failed":
+                raise RuntimeError("job ended in status=failed; not exported as data")
+        except Exception as exc:  # log and continue; never export a half-run as data
+            (OUT / f"{split}_{qid}.failed.json").write_text(json.dumps({"qid": qid, "job_id": job_id, "error": type(exc).__name__, "detail": str(exc)[:300]}), encoding="utf-8")
+            print(f"{qid}: FAILED {type(exc).__name__}; see {split}_{qid}.failed.json")
+            continue
+        data["provenance"] = provenance(split, qid)
         (OUT / f"{split}_{qid}.json").write_text(json.dumps(data, indent=1), encoding="utf-8")
+        (OUT / f"{split}_{qid}.failed.json").unlink(missing_ok=True)  # a successful rerun supersedes the old failure
         spent += data["ledger"]["usd_modeled"]
         print(f"{qid}: status={data['status']} claims={len(data['claims'])} sources={len(data['sources'])} "
               f"tokens={data['ledger']['tokens_in'] + data['ledger']['tokens_out']} usd_modeled={data['ledger']['usd_modeled']:.4f}")
