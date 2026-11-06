@@ -45,6 +45,7 @@ addopts = "-m 'not live and not chaos'"
 [tool.ruff]
 line-length = 120
 target-version = "py312"
+extend-exclude = ["mutants"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]
