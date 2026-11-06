@@ -54,3 +54,9 @@ ignore = [
     "E501",   # Line length (prompts and benchmarks require long verbatim quotes)
     "UP047",  # Type parameters on generic functions
 ]
+
+[tool.mutmut]
+paths_to_mutate = ["app/core/verifier.py"]
+tests_dir = ["tests/"]
+also_copy = ["app/", "tests/", "pyproject.toml"]
+pytest_add_cli_args = ["-m", "not live and not chaos and not int", "-p", "no:randomly", "-x", "-q", "--ignore=tests/pg", "--ignore=tests/api", "--ignore=tests/chaos", "--ignore=tests/sec/test_ssrf.py"]

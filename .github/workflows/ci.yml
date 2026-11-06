@@ -5,34 +5,71 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  schedule:
+    - cron: "0 3 * * *"        # nightly: slow job
+  workflow_dispatch:
 
 jobs:
-  test:
+  fast:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: Research_notebook_project
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env: { POSTGRES_USER: citeguard, POSTGRES_PASSWORD: citeguard_password, POSTGRES_DB: citeguard }
+        ports: [ "5432:5432" ]
+        options: >-
+          --health-cmd "pg_isready -U citeguard" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql+asyncpg://citeguard:citeguard_password@localhost:5432/citeguard
     steps:
       - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: astral-sh/setup-uv@v2
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Install
+        run: uv pip install --system -e ".[test]"
+      - name: Lint
+        run: ruff check .
+      - name: Tests (no live, no chaos) with branch coverage gate on core files
+        run: >-
+          python -m pytest -q -m "not live and not chaos"
+          --cov=app.core.verifier --cov=app.core.llm --cov=app.core.fetcher --cov-branch
+          --cov-fail-under=85
+      - name: Security tests (required; a regression here fails the build)
+        run: python -m pytest tests/sec -q -m sec
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+      - name: Dependency audit
+        run: pip-audit
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v2
-        with:
-          version: "latest"
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install dependencies
-        run: |
-          uv pip install --system -e .
-
-      - name: Lint with ruff
-        run: |
-          ruff check .
-
-      - name: Run pytest
-        run: |
-          python -m pytest -v
+  slow:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Research_notebook_project
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env: { POSTGRES_USER: citeguard, POSTGRES_PASSWORD: citeguard_password, POSTGRES_DB: citeguard }
+        ports: [ "5432:5432" ]
+        options: >-
+          --health-cmd "pg_isready -U citeguard" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql+asyncpg://citeguard:citeguard_password@localhost:5432/citeguard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v2
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: uv pip install --system -e ".[test]"
+      - name: Chaos tests
+        run: python -m pytest tests/chaos -q -m chaos
+      - name: Mutation tests (verifier.py)
+        run: bash scripts/run_mutation.sh
+      # Live tests are intentionally NOT wired here: they spend money and need owner approval.

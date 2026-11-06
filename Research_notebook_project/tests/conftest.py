@@ -49,3 +49,13 @@ def sm_factory(pgdb):
 def _evidence_hmac_key(monkeypatch):
     # Test-only key; production reads CITEGUARD_EVIDENCE_HMAC_KEY from the environment.
     monkeypatch.setenv("CITEGUARD_EVIDENCE_HMAC_KEY", "test-key-not-a-secret")
+
+
+@pytest.fixture(autouse=True)
+def _restore_llm_provider():
+    """tests/pg patches llm._call_provider inside 10 concurrent tasks; overlapping patch() exits restore a STALE stub
+    and leak it into later tests (found by randomized ordering). Restore the real function after every test."""
+    from app.core import llm
+    orig = llm._call_provider
+    yield
+    llm._call_provider = orig
