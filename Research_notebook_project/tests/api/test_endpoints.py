@@ -26,11 +26,15 @@ def client(sm_factory, monkeypatch):
             yield s
             await s.commit()
 
+    monkeypatch.setenv("ADMIN_API_KEY", "test-key")
     main.app.dependency_overrides[get_db] = override
     c = httpx.AsyncClient(transport=httpx.ASGITransport(app=main.app), base_url="http://t")
     c.sm, c.launched = sm, launched
     yield c
     main.app.dependency_overrides.clear()
+
+
+AUTH = {"X-API-Key": "test-key"}
 
 
 async def _job(c, status="running", question="what is the efficiency of perovskite cells?"):
@@ -72,7 +76,6 @@ async def test_post_research_rejects_invalid_input_with_422_and_no_job(client, b
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(strict=True, reason="no bounds on max_tokens/max_minutes: a caller can set an unbounded budget (Phase 3 ingress validation)")
 @pytest.mark.parametrize("field,value", [("max_tokens", -1), ("max_tokens", 10**12), ("max_minutes", 0), ("max_minutes", 10**6)])
 async def test_post_research_rejects_absurd_budgets(client, field, value):
     r = await client.post("/research", json={"question": "valid question here", field: value})
@@ -80,7 +83,6 @@ async def test_post_research_rejects_absurd_budgets(client, field, value):
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(strict=True, reason="no question length cap (Phase 3 ingress)")
 async def test_post_research_rejects_a_megabyte_question(client):
     r = await client.post("/research", json={"question": "a" * 1_000_000})
     assert r.status_code == 422
@@ -117,7 +119,6 @@ async def test_cancel_sets_status(client):
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(strict=True, reason="cancel unconditionally overwrites status, so a finished job becomes 'cancelled'")
 async def test_cancel_does_not_rewrite_a_finished_job(client):
     jid = await _job(client, status="done")
     await client.post(f"/jobs/{jid}/cancel")
@@ -126,28 +127,26 @@ async def test_cancel_does_not_rewrite_a_finished_job(client):
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(strict=True, reason="AUDIT s7 #9: no auth, /export/claims.csv dumps every job's question to anyone")
 async def test_export_requires_credentials(client):
     await _job(client, question="confidential merger question")
-    r = await client.get("/export/claims.csv")
-    assert r.status_code in (401, 403)
+    assert (await client.get("/export/claims.csv")).status_code == 403
+    assert (await client.get("/export/claims.csv", headers={"X-API-Key": "wrong"})).status_code == 403
+    assert (await client.get("/export/claims.csv", headers=AUTH)).status_code == 200
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(strict=True, reason="AUDIT s7 #9: no auth, anyone can overwrite human labels")
 async def test_labels_import_requires_credentials(client):
     r = await client.post("/labels", files={"file": ("l.csv", io.BytesIO(b"claim_id,human_label\n1,supported\n"), "text/csv")})
     assert r.status_code in (401, 403)
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(strict=True, reason="CSV formula injection: user-controlled question/claim text is exported unescaped")
 async def test_export_csv_neutralizes_spreadsheet_formulas(client):
     jid = await _job(client, question='=HYPERLINK("http://evil","x")')
     async with client.sm() as s:
         s.add(Claim(job_id=jid, text="+cmd|calc!A0", quote="q", final_status="kept"))
         await s.commit()
-    rows = list(csv.reader(io.StringIO((await client.get("/export/claims.csv")).text)))[1:]
+    rows = list(csv.reader(io.StringIO((await client.get("/export/claims.csv", headers=AUTH)).text)))[1:]
     assert rows and all(not cell.startswith(("=", "+", "-", "@")) for row in rows for cell in row[2:4])
 
 
@@ -160,21 +159,19 @@ async def test_labels_import_updates_only_existing_claims_and_ignores_blanks(cli
         await s.commit()
         i1, i2 = c1.id, c2.id
     body = f"claim_id,human_label\n{i1},supported\n{i2},\n999999,unsupported\n".encode()
-    r = await client.post("/labels", files={"file": ("l.csv", io.BytesIO(body), "text/csv")})
+    r = await client.post("/labels", files={"file": ("l.csv", io.BytesIO(body), "text/csv")}, headers=AUTH)
     assert r.json() == {"status": "ok", "updated_claims": 1}
     async with client.sm() as s:
         assert (await s.get(Claim, i1)).human_label == "supported" and not (await s.get(Claim, i2)).human_label
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(strict=True, reason="malformed labels CSV raises an unhandled error instead of a 4xx")
 async def test_labels_import_malformed_csv_is_a_4xx(client):
     r = await client.post("/labels", files={"file": ("l.csv", io.BytesIO(b"claim_id,human_label\nNOTANUMBER,x\n"), "text/csv")})
     assert 400 <= r.status_code < 500
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(strict=True, reason="AUDIT s5: failed jobs store str(exception) + full traceback in report_md, served by GET /jobs/{id}/report")
 async def test_failed_job_report_does_not_leak_exception_text_or_traceback(client, monkeypatch):
     import app.pipeline as pipeline
     jid = await _job(client, status="queued")

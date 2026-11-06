@@ -112,7 +112,6 @@ async def test_redirect_to_blocked_host_is_rejected(servers):
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(strict=True, reason="AUDIT s6 SSRF: redirect hops are fetched BEFORE only the final URL is validated; the internal host receives the request")
 async def test_redirect_target_is_never_contacted(servers):
     a, b = servers
     with pytest.raises(SSRFSecurityError):
@@ -121,7 +120,6 @@ async def test_redirect_target_is_never_contacted(servers):
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(strict=True, reason="AUDIT s6 SSRF: 2 MB cap is enforced after the whole body is downloaded")
 async def test_oversize_body_is_cut_off_near_the_cap(servers):
     a, _ = servers
     with pytest.raises(Exception):
@@ -137,7 +135,6 @@ async def test_oversize_body_is_rejected_at_all(servers):
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(strict=True, reason="AUDIT s6 SSRF: no content-type allowlist; image/png is parsed as text")
 async def test_non_text_content_type_is_rejected(servers):
     a, _ = servers
     with pytest.raises(Exception):
@@ -145,7 +142,6 @@ async def test_non_text_content_type_is_rejected(servers):
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(strict=True, reason="AUDIT s6 SSRF: DNS is resolved once for validation and again by httpx (rebinding TOCTOU)")
 async def test_dns_rebinding_does_not_reach_loopback(monkeypatch):
     a = Srv(H)
     a.target_port = 0
@@ -172,7 +168,8 @@ async def test_dns_rebinding_does_not_reach_loopback(monkeypatch):
             await fetch_url_snapshot(f"http://rebind.test:{a.port}/ok")
         except Exception:
             pass
-        assert seen["validate"] >= 1 and seen["connect"] >= 1, f"simulation did not engage both resolvers: {seen}"
+        assert seen["validate"] >= 1, f"validation resolver never ran: {seen}"
+        assert seen["connect"] == 0, "httpx resolved the name again instead of connecting to the vetted IP"
         assert a.hits == [], "request reached the loopback server after DNS flipped"
     finally:
         a.close()

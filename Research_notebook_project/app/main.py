@@ -1,6 +1,8 @@
 # app/main.py
 import csv
+import hmac
 import io
+import os
 from contextlib import asynccontextmanager
 from typing import Literal
 
@@ -9,6 +11,7 @@ from fastapi import (
     Depends,
     FastAPI,
     File,
+    Header,
     HTTPException,
     Response,
     UploadFile,
@@ -22,6 +25,19 @@ from app.core.verifier import require_evidence_key
 from app.db import get_db, init_db
 from app.models import Claim, Job, LedgerEntry
 from app.pipeline import execute_research_job
+
+
+def require_admin(x_api_key: str | None = Header(default=None)):
+    """Fail closed: with ADMIN_API_KEY unset, the admin endpoints are disabled (403), never open."""
+    expected = os.environ.get("ADMIN_API_KEY", "")
+    if not expected or not x_api_key or not hmac.compare_digest(x_api_key, expected):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+
+def _csv_safe(v):
+    """Neutralize spreadsheet formula injection (OWASP CSV injection)."""
+    v = "" if v is None else v
+    return "'" + v if isinstance(v, str) and v.startswith(("=", "+", "-", "@", "\t", "\r")) else v
 
 
 @asynccontextmanager
@@ -40,9 +56,9 @@ app = FastAPI(
 
 
 class ResearchRequest(BaseModel):
-    question: str = Field(min_length=5, description="The research question to investigate")
-    max_tokens: int = Field(default=50_000, description="Hard token budget cap")
-    max_minutes: int = Field(default=8, description="Time deadline in minutes")
+    question: str = Field(min_length=5, max_length=2000, description="The research question to investigate")
+    max_tokens: int = Field(default=50_000, ge=1_000, le=500_000, description="Hard token budget cap")
+    max_minutes: int = Field(default=8, ge=1, le=60, description="Time deadline in minutes")
     mode: Literal["single", "multi", "shadow"] = Field(
         default="multi",
         description="Execution mode: multi (parallel), single (sequential), or shadow (records verifier verdicts without dropping)"
@@ -182,11 +198,12 @@ async def cancel_job(job_id: int, db: AsyncSession = Depends(get_db)):
     if not job:
         raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
 
-    job.status = "cancelled"
-    await db.commit()
-    return {"job_id": job.id, "status": "cancelled"}
+    if job.status in ("queued", "running"):  # never rewrite a finished job
+        job.status = "cancelled"
+        await db.commit()
+    return {"job_id": job.id, "status": job.status}
 
-@app.get("/export/claims.csv")
+@app.get("/export/claims.csv", dependencies=[Depends(require_admin)])
 async def export_claims_csv(db: AsyncSession = Depends(get_db)):
     """Exports all claims to CSV for human labeling and evaluation."""
     claims_res = await db.execute(select(Claim, Job.question).join(Job, Claim.job_id == Job.id))
@@ -200,10 +217,10 @@ async def export_claims_csv(db: AsyncSession = Depends(get_db)):
     ])
 
     for claim, question in rows:
-        writer.writerow([
+        writer.writerow([_csv_safe(c) for c in (
             claim.id, claim.job_id, question, claim.text, claim.quote,
             claim.quote_found, claim.entailment, claim.final_status, claim.human_label
-        ])
+        )])
 
     return Response(
         content=output.getvalue(),
@@ -211,14 +228,17 @@ async def export_claims_csv(db: AsyncSession = Depends(get_db)):
         headers={"Content-Disposition": "attachment; filename=claims_evaluation.csv"}
     )
 
-@app.post("/labels")
+@app.post("/labels", dependencies=[Depends(require_admin)])
 async def import_labels_csv(file: UploadFile = File(...), db: AsyncSession = Depends(get_db)):
     """Imports human labels from CSV to evaluate verifier metrics."""
     contents = await file.read()
-    reader = csv.DictReader(io.StringIO(contents.decode("utf-8")))
+    try:
+        rows = list(csv.DictReader(io.StringIO(contents.decode("utf-8"))))
+        ids = [int(r["claim_id"]) for r in rows]
+    except (UnicodeDecodeError, ValueError, KeyError, TypeError, csv.Error):
+        raise HTTPException(status_code=400, detail="Malformed labels CSV")
     updated_count = 0
-    for row in reader:
-        claim_id = int(row["claim_id"])
+    for row, claim_id in zip(rows, ids):
         label = row.get("human_label", "").strip()
         if label:
             claim = await db.get(Claim, claim_id)

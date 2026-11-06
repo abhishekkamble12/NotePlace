@@ -3,6 +3,7 @@
 Entry point for running CiteGuard research jobs via the LangGraph StateGraph.
 Threaded with job_id as the graph thread_id (in-memory checkpointer; not crash-safe).
 """
+import logging
 import traceback
 from datetime import UTC, datetime, timedelta
 
@@ -10,6 +11,8 @@ from app.db import AsyncSessionLocal
 from app.models import Job
 from app.research.graph import research_graph
 from app.research.state import ResearchGraphState
+
+logger = logging.getLogger(__name__)
 
 
 async def execute_research_job(job_id: int) -> None:
@@ -52,5 +55,6 @@ async def execute_research_job(job_id: int) -> None:
             failed_job = await db.get(Job, job_id)
             if failed_job and failed_job.status != "cancelled":
                 failed_job.status = "failed"
-                failed_job.report_md = f"# Research Failed\n\nError: {e}\n\n```\n{traceback.format_exc()}\n```"
+                failed_job.report_md = f"# Research Failed\n\nThe job failed ({type(e).__name__}). See server logs."
+                logger.error("job %s failed:\n%s", job_id, traceback.format_exc())
                 await db.commit()

@@ -75,40 +75,71 @@ def validate_url_security(url: str) -> str:
     return hostname.lower()
 
 
+MAX_REDIRECTS = 5
+ALLOWED_CONTENT_TYPES = ("text/", "application/xhtml+xml", "application/xml")
+
+
+def _pinned_ip(hostname: str) -> str:
+    """Resolve once and return a checked IP to connect to, so httpx cannot re-resolve (DNS rebinding)."""
+    try:
+        ipaddress.ip_address(hostname)
+        return hostname  # literal: already vetted by validate_url_security
+    except ValueError:
+        pass
+    try:
+        ips = [i[4][0] for i in socket.getaddrinfo(hostname, None)]
+    except socket.gaierror as e:
+        raise SSRFSecurityError(f"Could not resolve host '{hostname}': {e}")
+    if not ips or not all(is_ip_allowed(ip) for ip in ips):
+        raise SSRFSecurityError(f"Host '{hostname}' resolves to restricted IP")
+    return ips[0]
+
+
 async def fetch_url_snapshot(url: str) -> tuple[str, str, str]:
     """
     Fetches clean text from a URL securely:
-    1. Validates scheme and DNS against SSRF
-    2. Enforces 8s timeout and 2MB max download
-    3. Re-validates redirection targets
+    1. Validates scheme and DNS against SSRF, for the first URL and for EVERY redirect hop before it is contacted
+    2. Connects to the vetted IP (no second DNS lookup)
+    3. Enforces 8s timeout, text content-type allowlist, and a 2MB cap applied while streaming
     4. Extracts clean text snapshot with trafilatura
     Returns (domain, sha256_hash, snapshot_text).
     """
-    domain = validate_url_security(url)
-
     async with httpx.AsyncClient(
         timeout=httpx.Timeout(REQUEST_TIMEOUT),
-        follow_redirects=True,
+        follow_redirects=False,
         headers={"User-Agent": "CiteGuardBot/1.0 (+https://github.com/citeguard)"}
     ) as client:
-        # Pre-hook for redirect validation to prevent redirect-based SSRF
-        response = await client.get(url)
-        final_url = str(response.url)
-        if final_url != url:
-            domain = validate_url_security(final_url)
-
-        if response.status_code >= 400:
-            raise httpx.HTTPStatusError(
-                f"HTTP error {response.status_code} fetching {url}",
-                request=response.request,
-                response=response
-            )
-
-        content = response.content
-        if len(content) > MAX_PAGE_BYTES:
-            raise ValueError(f"Page size {len(content)} bytes exceeds 2 MB cap")
-
-        raw_html = response.text
+        for _ in range(MAX_REDIRECTS + 1):
+            domain = validate_url_security(url)
+            parsed = httpx.URL(url)
+            ip = _pinned_ip(parsed.host)
+            host_hdr = parsed.host if parsed.port is None else f"{parsed.host}:{parsed.port}"
+            async with client.stream(
+                "GET", parsed.copy_with(host=ip), headers={"Host": host_hdr},
+                extensions={"sni_hostname": parsed.host},
+            ) as response:
+                if response.is_redirect and "location" in response.headers:
+                    url = str(parsed.join(response.headers["location"]))
+                    continue
+                if response.status_code >= 400:
+                    raise httpx.HTTPStatusError(
+                        f"HTTP error {response.status_code} fetching {url}",
+                        request=response.request, response=response)
+                ctype = response.headers.get("content-type", "text/html").split(";")[0].strip().lower()
+                if not ctype.startswith(ALLOWED_CONTENT_TYPES):
+                    raise ValueError(f"Unsupported content-type '{ctype}'")
+                declared = response.headers.get("content-length", "")
+                if declared.isdigit() and int(declared) > MAX_PAGE_BYTES:
+                    raise ValueError(f"Page size {declared} bytes exceeds 2 MB cap")
+                buf = bytearray()
+                async for part in response.aiter_bytes():
+                    buf += part
+                    if len(buf) > MAX_PAGE_BYTES:
+                        raise ValueError("Page exceeds 2 MB cap")
+                raw_html = bytes(buf).decode(response.encoding or "utf-8", errors="replace")
+                break
+        else:
+            raise SSRFSecurityError("Too many redirects")
 
     # Extract text with trafilatura
     clean_text = trafilatura.extract(
