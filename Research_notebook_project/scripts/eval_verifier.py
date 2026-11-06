@@ -26,6 +26,8 @@ from unittest.mock import AsyncMock, MagicMock
 # Add project root to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from rapidfuzz import fuzz
+
 from app.core.verifier import VERIFIER_SYSTEM_PROMPT, locate_quote, verify_claim
 from app.models import Job, VerifierTestSet
 
@@ -81,7 +83,7 @@ async def load_test_items(csv_only: bool = False, limit: int | None = None) -> l
     return items
 
 
-async def run_evaluation(csv_only: bool = False, limit: int | None = None, model: str = "gemma2-9b-it"):
+async def run_evaluation(csv_only: bool = False, limit: int | None = None, model: str = "gemma2-9b-it", baseline: str = ""):
     items = await load_test_items(csv_only=csv_only, limit=limit)
 
     if not items:
@@ -102,6 +104,9 @@ async def run_evaluation(csv_only: bool = False, limit: int | None = None, model
     rows = []  # (item, predicted verdict, match score)
     unresolved = 0
     for i, item in enumerate(items, 1):
+        if baseline == "fuzzy":
+            rows.append((item, fuzzy_baseline(item), 0.0))
+            continue
         loc = locate_quote(item["quote"], item["context"])
         if loc is None:  # citation failure: counts as a dropped (unsupported) prediction
             unresolved += 1
@@ -127,9 +132,14 @@ async def run_evaluation(csv_only: bool = False, limit: int | None = None, model
 
     RUNS_DIR.mkdir(exist_ok=True)
     print(f"\nCitation failures (quote not locatable in snapshot): {unresolved}/{len(rows)}")
-    log = {"data_kind": "synthetic_fixture", "unresolved_citations": unresolved, "model": model, "n": len(rows), "summary": summary,
+    log = {"baseline": baseline or None, "data_kind": "synthetic_fixture", "unresolved_citations": unresolved, "model": model, "n": len(rows), "summary": summary,
            "prompt_sha": hashlib.sha1(VERIFIER_SYSTEM_PROMPT.encode()).hexdigest()[:8]}
-    (RUNS_DIR / f"{log['prompt_sha']}_{model.replace('/', '_')}.json").write_text(json.dumps(log, indent=2))
+    (RUNS_DIR / f"{baseline or log['prompt_sha']}_{model.replace('/', '_')}.json").write_text(json.dumps(log, indent=2))
+
+
+def fuzzy_baseline(item: dict, threshold: float = 95.0) -> str:
+    """No-LLM baseline: claim 'supports' if it fuzzy-matches the cited span. Needs no key; shows what Stage 2 must beat."""
+    return "supports" if fuzz.partial_ratio(item["claim"].lower(), item["quote"].lower()) >= threshold else "unsupported"
 
 
 def is_heldout(quote: str) -> bool:
@@ -161,23 +171,28 @@ def report(name: str, rs: list) -> dict:
     precision = tp / (tp + fp) if tp + fp else 0.0
     recall = tp / (tp + fn) if tp + fn else 0.0
     false_alarm = fp / neg if neg else 0.0
+    kept = conf["supports"]["supports"] + conf["partial"]["supports"] + conf["unsupported"]["supports"]
+    kept_precision = conf["supports"]["supports"] / kept if kept else 0.0
+    retention = conf["supports"]["supports"] / sum(conf["supports"].values()) if sum(conf["supports"].values()) else 0.0
     lo, hi = bootstrap_ci([(it["label"] == "unsupported", pred == "unsupported") for it, pred, _ in rs])
     print(f"\n=== {name.upper()} (n={len(rs)}) ===")
     print(f"recall(unsupported)={recall:.1%} [95% CI {lo:.1%}-{hi:.1%}]  precision={precision:.1%}  false-alarm={false_alarm:.1%}")
     print("baseline always-unsupported: recall=100.0% false-alarm=100.0%  (a useful verifier must beat the false-alarm side)")
+    print(f"kept-claim precision={kept_precision:.1%} (of {kept} kept)  retention of true-supported claims={retention:.1%}")
     print(f"{'actual/pred':<14}" + "".join(f"{b:>13}" for b in labels))
     for a in labels:
         print(f"{a:<14}" + "".join(f"{conf[a][b]:>13}" for b in labels))
     for t, (c, n) in sorted(by_type.items()):
         print(f"  {t:<15} caught {c}/{n} ({c / n:.0%})")
-    return {"recall": recall, "precision": precision, "false_alarm": false_alarm, "ci": [lo, hi], "n": len(rs)}
+    return {"recall": recall, "precision": precision, "kept_precision": kept_precision, "retention": retention, "false_alarm": false_alarm, "ci": [lo, hi], "n": len(rs)}
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate CiteGuard verifier on test set.")
     parser.add_argument("--csv-only", action="store_true", help="Load directly from CSV without DB")
     parser.add_argument("--limit", type=int, default=None, help="Limit number of items to evaluate")
+    parser.add_argument("--baseline", choices=["fuzzy"], default="", help="Run a no-LLM baseline instead of the verifier")
     parser.add_argument("--model", type=str, default="gemma2-9b-it", help="Model to evaluate")
     args = parser.parse_args()
 
-    asyncio.run(run_evaluation(csv_only=args.csv_only, limit=args.limit, model=args.model))
+    asyncio.run(run_evaluation(csv_only=args.csv_only, limit=args.limit, model=args.model, baseline=args.baseline))
