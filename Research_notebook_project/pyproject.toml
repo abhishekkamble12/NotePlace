@@ -59,4 +59,5 @@ ignore = [
 source_paths = ["app/core/verifier.py"]
 
 also_copy = ["app/", "tests/", "scripts/", "evals/", "pyproject.toml"]
-pytest_add_cli_args = ["-m", "not live and not chaos and not int", "-p", "no:randomly", "-x", "-q", "--ignore=tests/pg", "--ignore=tests/api", "--ignore=tests/chaos", "--ignore=tests/sec/test_ssrf.py"]
+pytest_add_cli_args = ["-m", "not live and not chaos and not int", "-p", "no:randomly", "-q"]
+pytest_add_cli_args_test_selection = ["tests/test_verifier_phase1.py", "tests/property/test_verifier_properties.py", "tests/sec/test_injection_corpus.py", "tests/test_hard_cases.py", "tests/test_phase1_followups.py"]

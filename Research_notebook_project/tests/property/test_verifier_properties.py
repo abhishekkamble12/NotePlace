@@ -1,7 +1,7 @@
 """Hypothesis property tests. Expected values come from how the inputs are CONSTRUCTED, never from the function under test."""
 import re
 
-from hypothesis import given, settings
+from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
 from app.core.fetcher import chunk_spans
@@ -65,6 +65,7 @@ def test_any_changed_digit_in_a_long_quote_is_found_by_fuzzy_but_rejected_by_gua
 
 @given(TEXT.map(lambda t: t + " ").flatmap(lambda t: st.just(t * 30)), st.integers(5, 40), st.integers(0, 4))
 def test_chunk_spans_slice_back_to_exact_text(t, size, overlap):
+    assume(t.strip())  # whitespace-only text has no words, so correctly no chunks
     spans = chunk_spans(t, chunk_size=size, overlap=overlap)
     words = [m.group() for m in re.finditer(r"\S+", t)]
     assert spans, "non-empty text must give chunks"
