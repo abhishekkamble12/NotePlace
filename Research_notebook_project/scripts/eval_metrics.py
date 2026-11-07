@@ -2,6 +2,7 @@
 
 precision = P(gold supports | kept)      <- what a reader of the report cares about
 retention = P(kept | gold supports)      <- a.k.a. coverage/recall; always report next to precision
+far       = P(kept | gold not supports)  <- false-acceptance rate, the primary safety metric; frr = 1 - retention
 """
 import math
 import random
@@ -14,7 +15,9 @@ def counts(gold: list[str], pred: list[str]) -> dict:
     kept, pos = sum(p == "supports" for p in pred), sum(g == "supports" for g in gold)
     precision, retention = (tp / kept if kept else math.nan), (tp / pos if pos else math.nan)
     f1 = 2 * precision * retention / (precision + retention) if tp else (0.0 if kept and pos else math.nan)
-    return {"n": len(gold), "kept": kept, "gold_supports": pos, "tp": tp, "precision": precision, "retention": retention, "f1": f1}
+    neg, fa = len(gold) - pos, kept - tp
+    return {"n": len(gold), "kept": kept, "gold_supports": pos, "tp": tp, "precision": precision, "retention": retention, "f1": f1,
+            "gold_not_supports": neg, "false_accepts": fa, "far": fa / neg if neg else math.nan, "frr": 1 - retention}
 
 
 def confusion(gold: list[str], pred: list[str]) -> dict:
@@ -28,15 +31,17 @@ def bootstrap_ci(gold: list[str], pred: list[str], n_boot: int = 2000, seed: int
     """Percentile 95% CI of precision/retention/f1, resampling claims. Undefined resamples (no kept / no positives) are skipped
     and counted. shortcut: i.i.d. over claims; claims from one source/report are correlated so this is optimistic, use grouped resampling once groups are labeled."""
     rng, idx = random.Random(seed), range(len(gold))
-    draws: dict[str, list[float]] = {"precision": [], "retention": [], "f1": []}
+    draws: dict[str, list[float]] = {"precision": [], "retention": [], "f1": [], "far": []}
     skipped = 0
     for _ in range(n_boot):
         s = [rng.choice(idx) for _ in idx]
         c = counts([gold[i] for i in s], [pred[i] for i in s])
+        if not math.isnan(c["far"]):  # FAR has its own denominator, so it is drawn even when precision is undefined
+            draws["far"].append(c["far"])
         if math.isnan(c["precision"]) or math.isnan(c["retention"]):
             skipped += 1
             continue
-        for k in draws:
+        for k in ("precision", "retention", "f1"):
             draws[k].append(c[k])
     out: dict = {"n_boot": n_boot, "skipped_resamples": skipped}
     for k, v in draws.items():

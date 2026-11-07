@@ -58,3 +58,24 @@ def test_report_rejects_bad_labels(tmp_path):
 def test_wilson_not_degenerate_on_all_correct():
     lo, hi = wilson(5, 5)
     assert hi == 1.0 and 0.56 < lo < 0.57  # textbook value 0.566
+
+
+def test_false_acceptance_rate_hand_computed():
+    # 2 kept non-supports out of 4 gold non-supports; 1 of 3 gold supports dropped
+    gold = ["supports", "supports", "supports", "partial", "partial", "unsupported", "unsupported"]
+    pred = ["supports", "supports", "unsupported", "supports", "partial", "supports", "unsupported"]
+    m = counts(gold, pred)
+    assert (m["false_accepts"], m["gold_not_supports"]) == (2, 4)
+    assert m["far"] == 0.5
+    assert math.isclose(m["frr"], 1 / 3)
+
+
+def test_far_undefined_without_negatives():
+    assert math.isnan(counts(["supports"], ["supports"])["far"])
+
+
+def test_bootstrap_reports_far():
+    gold = ["supports", "unsupported"] * 20
+    pred = ["supports", "supports", "supports", "unsupported"] * 10
+    ci = bootstrap_ci(gold, pred, n_boot=200)
+    assert ci["far"][0] <= 0.5 <= ci["far"][1]

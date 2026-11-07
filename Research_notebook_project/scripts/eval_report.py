@@ -25,7 +25,7 @@ def build(path: Path) -> dict:
     out = {
         "predictions_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
         "git": subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip(),
-        "metrics": (m := counts(gold, pred)), "ci95": {**bootstrap_ci(gold, pred), "precision_wilson": wilson(m["tp"], m["kept"]), "retention_wilson": wilson(m["tp"], m["gold_supports"])}, "confusion_rowgold_colpred": confusion(gold, pred),
+        "metrics": (m := counts(gold, pred)), "ci95": {**bootstrap_ci(gold, pred), "precision_wilson": wilson(m["tp"], m["kept"]), "retention_wilson": wilson(m["tp"], m["gold_supports"]), "far_wilson": wilson(m["false_accepts"], m["gold_not_supports"])}, "confusion_rowgold_colpred": confusion(gold, pred),
     }
     if rows and rows[0].get("score"):
         out["precision_vs_coverage"] = precision_coverage_sweep(gold, [float(r["score"]) for r in rows])
@@ -40,7 +40,7 @@ def main() -> None:
     rep = build(a.predictions)
     m, ci = rep["metrics"], rep["ci95"]
     print(f"n={m['n']} kept={m['kept']} gold_supports={m['gold_supports']}")
-    for k in ("precision", "retention", "f1"):
+    for k in ("far", "precision", "retention", "f1"):
         print(f"{k:<10} {m[k]:.3f}  95% CI bootstrap [{ci[k][0]:.3f}, {ci[k][1]:.3f}]"
               + (f"  Wilson [{ci[k + '_wilson'][0]:.3f}, {ci[k + '_wilson'][1]:.3f}]" if k + "_wilson" in ci else ""))
     print("confusion (rows gold, cols pred):", json.dumps(rep["confusion_rowgold_colpred"]))
