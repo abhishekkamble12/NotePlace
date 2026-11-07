@@ -1,0 +1,9 @@
+{
+ "file": "test_label_sheet.csv",
+ "sha256": "d75386c8a481bd90896de3829eaaf25fd4c3d4a0e1b212ff81537469655bde29",
+ "class_counts": {
+  "supports": 31,
+  "unsupported": 6,
+  "partial": 6
+ }
+}

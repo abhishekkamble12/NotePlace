@@ -1,0 +1,3 @@
+# Eval data is hashed (scripts/freeze_dataset.py); keep bytes identical on every OS
+*.csv -text
+evals/**/*.json -text
