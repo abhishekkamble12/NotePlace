@@ -20,10 +20,7 @@ test-all:       ## everything except live
 	$(PY) -m pytest -q -m "not live"
 
 test-cov:
-	$(PY) -m pytest -q -m "not live" --cov=app.core.verifier --cov=app.core.llm --cov=app.core.fetcher --cov-branch --cov-report=term-missing
-
-test-live:      ## SPENDS MONEY, needs GROQ_API_KEY. Not implemented yet: see TESTING.md "Known gaps".
-	@echo "live layer not implemented; needs owner approval for key + budget" && exit 1
+	$(PY) -m pytest -q -p no:randomly -m "not live" --cov=app.core.verifier --cov=app.core.llm --cov=app.core.fetcher --cov-branch --cov-report=term-missing
 
 test-mutation:  ## mutmut in Linux Docker (mutmut does not run on native Windows)
 	docker run --rm -v "$(CURDIR):/work" -w /work python:3.12-slim bash scripts/run_mutation.sh

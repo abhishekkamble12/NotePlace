@@ -115,10 +115,10 @@ async def test_rate_limiter_exceeds_deadline_raises_error():
 
 @pytest.mark.asyncio
 async def test_phase_budget_cap_math():
-    """Verify phase shares: Research 50%, Writing 15%, Verify 25%, Reserve 10%."""
+    """Writing and verifying caps are sized to the measured token split (writing ~64%, verifying ~32%)."""
     assert PHASE_BUDGET_SHARES["research"] == 0.50
-    assert PHASE_BUDGET_SHARES["writing"] == 0.15
-    assert PHASE_BUDGET_SHARES["verifying"] == 0.25
+    assert PHASE_BUDGET_SHARES["writing"] == 0.60
+    assert PHASE_BUDGET_SHARES["verifying"] == 0.35
     assert PHASE_BUDGET_SHARES["reserve"] == 0.10
 
 
@@ -131,16 +131,16 @@ async def test_budget_exceeded_before_provider_call():
     job = Job(id=1, max_tokens=10_000)
     mock_db.get.return_value = job
 
-    # Phase "writing" gets 15% -> 1,500 token cap
-    # Mock ledger queries returning 1,400 tokens already used in "writing"
+    # Phase "writing" gets 60% -> 6,000 token cap
+    # Mock ledger queries returning 5,900 tokens already used in "writing"
     mock_result = MagicMock()
     mock_row = MagicMock()
-    mock_row.total_tokens = 3000
-    mock_row.phase_tokens = 1400
+    mock_row.total_tokens = 6500
+    mock_row.phase_tokens = 5900
     mock_result.one.return_value = mock_row
     mock_db.execute.return_value = mock_result
 
-    # An estimated call of 200 tokens would push writing phase to 1,600 > 1,500
+    # An estimated call of 200 tokens would push writing phase to 6,100 > 6,000 (job total stays under 10,000)
     with pytest.raises(BudgetExceededError) as exc_info:
         await check_budget_caps(mock_db, scope=("job", 1), phase="writing", estimated_tokens=200)
 

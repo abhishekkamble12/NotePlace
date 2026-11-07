@@ -1,5 +1,5 @@
 """SSRF tests. Real local HTTP servers; the only seam is the test harness allowing ITS OWN origin through the loopback ban.
-Everything else in app.core.fetcher is the real code. xfail(strict) = a real, reproduced hole (AUDIT.md section 6, 'SSRF-safe fetcher')."""
+Everything else in app.core.fetcher is the real code."""
 import asyncio
 import socket
 import threading

@@ -483,13 +483,10 @@ async def render_node(state: ResearchGraphState) -> dict[str, Any]:
         if not job:
             return {"status": "failed", "stage": "done"}
 
-        report = await generate_markdown_report(db, job_id)
-        job.report_md = report
-        job.stage = "rendering"
-
-        # If job was marked partial due to budget exit, preserve partial status
+        # Final status first, so the report header shows it. Partial (budget exit) and cancelled are preserved.
         if job.status != "partial" and job.status != "cancelled":
             job.status = "done"
-
+        job.stage = "rendering"
+        job.report_md = await generate_markdown_report(db, job_id)
         await db.commit()
         return {"status": job.status, "stage": "done"}

@@ -1,5 +1,4 @@
-"""API tests: real FastAPI app over ASGI, real Postgres. Only the background pipeline launcher is replaced
-(recorded; listed in the TESTING.md mock table)."""
+"""API tests: real FastAPI app over ASGI, real Postgres. Only the background pipeline launcher is replaced."""
 import csv
 import io
 from unittest.mock import AsyncMock

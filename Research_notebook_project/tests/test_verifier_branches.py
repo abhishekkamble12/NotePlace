@@ -1,4 +1,4 @@
-"""Branch-level tests for verify_claim and rewrite_claim, written from mutation survivors (see TESTING.md).
+"""Branch-level tests for verify_claim and rewrite_claim, written from mutation survivors.
 Providers are mocked; these pin routing, drop codes, offsets, match scores and the exact LLM call contract."""
 import re
 from types import SimpleNamespace

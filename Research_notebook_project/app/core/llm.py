@@ -39,13 +39,15 @@ MODEL_PRICING: dict[str, dict[str, float]] = {
     "default": {"input": 0.00050, "output": 0.00150},
 }
 
-# Per-phase token allocation shares (spec section 6.5)
-# Research: 50%, Writing: 15%, Verify+Rewrite: 25%, Reserve: 10%
+# Per-phase token caps as a share of the job budget. These cap each phase; they are not a partition (the job cap
+# is enforced separately, so the shares need not sum to 1). Sized from the ledger of 22 real jobs, where provider
+# tokens split writing 63.7% / verifying 32.4% / planning 3.9%. The old 15% writing cap let one writer call through
+# per job and silently skipped the remaining sub-questions. "research" makes no LLM calls (search + fetch only).
 PHASE_BUDGET_SHARES: dict[str, float] = {
     "research": 0.50,
     "planning": 0.10,
-    "writing": 0.15,
-    "verifying": 0.25,
+    "writing": 0.60,
+    "verifying": 0.35,
     "reserve": 0.10,
 }
 

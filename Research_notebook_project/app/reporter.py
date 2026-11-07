@@ -56,7 +56,7 @@ async def generate_markdown_report(db: AsyncSession, job_id: int) -> str:
 
     report_lines = []
     report_lines.append(f"# Research Report: {job.question}\n")
-    report_lines.append(f"> **Status:** `{job.status}` | **Execution Mode:** `{job.mode}` | **Stage:** `{job.stage}`\n")
+    report_lines.append(f"> **Status:** `{job.status}` | **Mode:** `{job.mode}`\n")
 
     # 1. Executive Summary
     report_lines.append("## 1. Executive Summary\n")
@@ -71,13 +71,16 @@ async def generate_markdown_report(db: AsyncSession, job_id: int) -> str:
     for sq in subquestions:
         report_lines.append(f"### {sq.text}\n")
         sq_claims = [c for c in kept_claims if c.subq_id == sq.id]
+        drafted = any(c.subq_id == sq.id for c in all_claims)
         if sq_claims:
             for c in sq_claims:
                 cite_idx = citation_map.get(c.source_id, "?")
                 confidence_tag = f"*(Confidence: {c.confidence})*"
                 report_lines.append(f"- {c.text} [{cite_idx}] {confidence_tag}")
+        elif drafted:
+            report_lines.append("*Claims were drafted but none passed verification (see section 5).*")
         else:
-            report_lines.append("*No verified claims survived verification for this sub-question.*")
+            report_lines.append("*No claims were drafted: no usable evidence was retrieved or the writing budget ran out.*")
         report_lines.append("")
 
     # 3. Where Sources Disagree
@@ -103,11 +106,13 @@ async def generate_markdown_report(db: AsyncSession, job_id: int) -> str:
     # 4. Evidence Gaps & Thin Evidence
     report_lines.append("## 4. Evidence Gaps & Limitations\n")
     skipped_subqs = [sq for sq in subquestions if sq.status == "skipped_budget"]
-    if skipped_subqs:
-        for sq in skipped_subqs:
-            report_lines.append(f"- **Budget Skipped:** Sub-question *'{sq.text}'* was skipped to preserve token budget.")
-    else:
-        report_lines.append("- All planned sub-questions were researched within budget.")
+    undrafted = [sq for sq in subquestions if sq.status != "skipped_budget" and not any(c.subq_id == sq.id for c in all_claims)]
+    for sq in skipped_subqs:
+        report_lines.append(f"- **Budget Skipped:** Sub-question *'{sq.text}'* was not researched (token budget).")
+    for sq in undrafted:
+        report_lines.append(f"- **No claims drafted:** *'{sq.text}'*")
+    if not skipped_subqs and not undrafted:
+        report_lines.append("- Every sub-question was researched and produced at least one drafted claim.")
     report_lines.append("\n")
 
     # 5. Dropped Claims (Audit Trail)
