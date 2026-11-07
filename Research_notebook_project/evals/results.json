@@ -1,0 +1,173 @@
+{
+ "hard_cases": {
+  "accuracy": {
+   "full_recorded_live_run": 0.75,
+   "fuzzy90_baseline": 0.5,
+   "stage1_current_code": 0.4583333333333333
+  },
+  "data": "synthetic, author-labeled, diagnostic only",
+  "dataset_sha256": "c8031d1d3b9e6905d4ede0b53291b694b475bf274142a90a58d9b310b04e3738",
+  "n": 24
+ },
+ "pipeline_runs": {
+  "cache_hits": 1,
+  "call_latency_ms_p50": 1179,
+  "call_latency_ms_p95": 2342,
+  "claims": 121,
+  "data": "10 live questions, Groq + Tavily; cost modeled from list prices, not billed",
+  "failed_attempts": 7,
+  "files": 10,
+  "jobs": 10,
+  "llm_calls": 142,
+  "n_latency": 141,
+  "quote_not_found": 5,
+  "shadow_verdicts": {
+   "none": 5,
+   "partial": 12,
+   "supports": 65,
+   "unsupported": 39
+  },
+  "tokens_in": 189200,
+  "tokens_out": 21095,
+  "unknown_usage_attempts": 7,
+  "usd_modeled": 0.1262
+ },
+ "real_claims": {
+  "all": {
+   "ci95": {
+    "f1": [
+     0.7801418439716312,
+     0.9047619047619048
+    ],
+    "far": [
+     0.0,
+     0.16
+    ],
+    "far_wilson": [
+     0.017310203195157234,
+     0.2014746724800358
+    ],
+    "n_boot": 2000,
+    "precision": [
+     0.921875,
+     1.0
+    ],
+    "precision_wilson": [
+     0.8945709497407398,
+     0.9915211805990546
+    ],
+    "retention": [
+     0.6559139784946236,
+     0.8426966292134831
+    ],
+    "retention_wilson": [
+     0.6478552553489343,
+     0.830278111984994
+    ],
+    "skipped_resamples": 0
+   },
+   "confusion_rowgold_colpred": {
+    "partial": {
+     "partial": 8,
+     "supports": 1,
+     "unsupported": 11
+    },
+    "supports": {
+     "partial": 3,
+     "supports": 63,
+     "unsupported": 18
+    },
+    "unsupported": {
+     "partial": 1,
+     "supports": 1,
+     "unsupported": 10
+    }
+   },
+   "metrics": {
+    "f1": 0.8456375838926173,
+    "false_accepts": 2,
+    "far": 0.0625,
+    "frr": 0.25,
+    "gold_not_supports": 32,
+    "gold_supports": 84,
+    "kept": 65,
+    "n": 116,
+    "precision": 0.9692307692307692,
+    "retention": 0.75,
+    "tp": 63
+   }
+  },
+  "data": "LLM-drafted, author-reviewed, single annotator (no kappa yet)",
+  "predictions": "shadow verdicts recorded at run time (older verifier commits; see RESULTS.md)",
+  "rows_in_sheets": 116,
+  "rows_scored": 116,
+  "sheet_sha256": {
+   "dev": "865b14ba8ebfbbb117c2096bfadecda15548f43ff17ad1d8ba1218b5bb5cf60b",
+   "test": "d75386c8a481bd90896de3829eaaf25fd4c3d4a0e1b212ff81537469655bde29"
+  },
+  "test_heldout": {
+   "ci95": {
+    "f1": [
+     0.7755102040816326,
+     0.9565217391304348
+    ],
+    "far": [
+     0.0,
+     0.2727272727272727
+    ],
+    "far_wilson": [
+     0.014864709450773478,
+     0.35388592179859524
+    ],
+    "n_boot": 2000,
+    "precision": [
+     0.875,
+     1.0
+    ],
+    "precision_wilson": [
+     0.811068230080416,
+     0.9931781910230102
+    ],
+    "retention": [
+     0.65625,
+     0.9354838709677419
+    ],
+    "retention_wilson": [
+     0.6371939644454013,
+     0.9081311641365236
+    ],
+    "skipped_resamples": 0
+   },
+   "confusion_rowgold_colpred": {
+    "partial": {
+     "partial": 4,
+     "supports": 0,
+     "unsupported": 2
+    },
+    "supports": {
+     "partial": 2,
+     "supports": 25,
+     "unsupported": 4
+    },
+    "unsupported": {
+     "partial": 0,
+     "supports": 1,
+     "unsupported": 5
+    }
+   },
+   "metrics": {
+    "f1": 0.8771929824561403,
+    "false_accepts": 1,
+    "far": 0.08333333333333333,
+    "frr": 0.19354838709677424,
+    "gold_not_supports": 12,
+    "gold_supports": 31,
+    "kept": 26,
+    "n": 43,
+    "precision": 0.9615384615384616,
+    "retention": 0.8064516129032258,
+    "tp": 25
+   }
+  }
+ }
+}

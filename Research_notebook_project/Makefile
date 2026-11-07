@@ -4,6 +4,9 @@
 #   export TEST_DATABASE_URL=postgresql+asyncpg://citeguard:citeguard_password@localhost:5433/citeguard
 PY ?= python
 
+eval:           ## recompute every README number from committed data -> evals/results.json + README table (no network)
+	$(PY) scripts/make_results.py
+
 test-unit:      ## no database, no network: unit + property + injection corpus
 	$(PY) -m pytest tests -q -m "not live and not chaos and not int" --ignore=tests/pg
 
