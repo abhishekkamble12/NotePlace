@@ -354,13 +354,17 @@ async def rewrite_node(state: ResearchGraphState) -> dict[str, Any]:
             if c_state["final_status"] == "needs_rewrite" and c_state["rewrite_count"] < 1:
                 claim = await db.get(Claim, c_state["id"])
                 if claim:
-                    rewritten = await rewrite_claim(
-                        db=db,
-                        job_id=job_id,
-                        original_claim=claim.text,
-                        quote=claim.quote,
-                        critique_reason=claim.entailment_reason
-                    )
+                    # Stage 2 input is the snapshot span, never the writer's quote. No offsets -> no rewrite -> drop.
+                    source = await db.get(Source, claim.source_id)
+                    rewritten = None
+                    if source and claim.start_char is not None and claim.end_char is not None:
+                        rewritten = await rewrite_claim(
+                            db=db,
+                            job_id=job_id,
+                            original_claim=claim.text,
+                            quote=source.snapshot[claim.start_char:claim.end_char],
+                            critique_reason=claim.entailment_reason
+                        )
                     if rewritten:
                         claim.text = rewritten
                         claim.rewrite_count += 1

@@ -349,6 +349,6 @@ async def rewrite_claim(
             messages=[{"role": "system", "content": REWRITER_SYSTEM_PROMPT}, {"role": "user", "content": user_prompt}],
             max_tokens=300, schema=RewrittenClaim, db=db,
         )
-    except (ValidationError, ProviderUnavailableError):
-        return None
+    except (ValidationError, ProviderUnavailableError, BudgetExceededError):
+        return None  # fail closed: the claim is dropped, same as verify_claim
     return parsed.rewritten_claim if parsed else None
