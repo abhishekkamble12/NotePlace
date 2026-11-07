@@ -31,7 +31,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - name: Install
-        run: uv pip install --system -e ".[test]"
+        run: uv pip install --system --torch-backend cpu -e ".[test]"
       - name: Lint
         run: ruff check .
       - name: Tests in random order (no live, no chaos)
@@ -71,7 +71,7 @@ jobs:
       - uses: astral-sh/setup-uv@v2
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - run: uv pip install --system -e ".[test]"
+      - run: uv pip install --system --torch-backend cpu -e ".[test]"
       - name: Chaos tests
         run: python -m pytest tests/chaos -q -m chaos
       - name: Mutation tests (verifier.py)
