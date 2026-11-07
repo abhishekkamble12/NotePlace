@@ -74,3 +74,49 @@ def wilson(k: int, n: int, z: float = 1.96) -> list[float]:
     p, d = k / n, 1 + z * z / n
     c, h = (p + z * z / (2 * n)) / d, z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d
     return [max(0.0, c - h), min(1.0, c + h)]
+
+
+# ---------------------------------------------------------------------------
+# Retrieval metrics over character-span gold (so chunkers that cut differently are scored on the same ground truth)
+# ---------------------------------------------------------------------------
+def covers(chunk: tuple[int, int], gold: list[tuple[int, int]]) -> frozenset[int]:
+    """Indexes of gold spans this chunk covers: overlap >= half of the SHORTER of (chunk, gold span).
+    Symmetric on purpose: a paragraph-sized chunk inside a long gold span and a long fixed window over a short gold span
+    both count, and a chunk touching a gold span by a few characters does not."""
+    out = set()
+    for i, (g0, g1) in enumerate(gold):
+        ov = min(chunk[1], g1) - max(chunk[0], g0)
+        if ov > 0 and ov >= 0.5 * min(chunk[1] - chunk[0], g1 - g0):
+            out.add(i)
+    return frozenset(out)
+
+
+def recall_covered(ranked: list[frozenset[int]], n_gold: int, k: int) -> float:
+    """Fraction of gold spans covered by at least one of the top-k chunks."""
+    return len(frozenset().union(*ranked[:k])) / n_gold
+
+
+def mrr_at(ranked: list[frozenset[int]], k: int) -> float:
+    return next((1 / r for r, c in enumerate(ranked[:k], start=1) if c), 0.0)
+
+
+def ndcg_at(ranked: list[frozenset[int]], n_gold: int, k: int) -> float:
+    """Binary-relevance nDCG: a chunk is relevant if it covers any gold span; the ideal ranking has min(n_gold, k) relevant chunks."""
+    dcg = sum(1 / math.log2(r + 1) for r, c in enumerate(ranked[:k], start=1) if c)
+    ideal = sum(1 / math.log2(r + 1) for r in range(1, min(n_gold, k) + 1))
+    return dcg / ideal if ideal else math.nan
+
+
+def mean_ci(values: list[float], n_boot: int = 2000, seed: int = 0) -> dict:
+    """Mean with a percentile bootstrap 95% CI over queries. shortcut: queries from one paper are correlated, so the CI is optimistic."""
+    rng, n = random.Random(seed), len(values)
+    means = sorted(sum(values[rng.randrange(n)] for _ in range(n)) / n for _ in range(n_boot))
+    return {"mean": sum(values) / n, "ci95": [means[int(0.025 * n_boot)], means[int(0.975 * n_boot) - 1]], "n": n}
+
+
+def paired_delta_ci(a: list[float], b: list[float], n_boot: int = 2000, seed: int = 0) -> dict:
+    """mean(b - a) over the same queries with a paired percentile bootstrap 95% CI. 'Measurably better' = CI excludes 0.
+    shortcut: queries from one paper are correlated, so the CI is optimistic."""
+    d = [y - x for x, y in zip(a, b, strict=True)]
+    r = mean_ci(d, n_boot, seed)
+    return {"delta": r["mean"], "ci95": r["ci95"], "excludes_zero": r["ci95"][0] > 0 or r["ci95"][1] < 0, "n": r["n"]}

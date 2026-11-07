@@ -17,6 +17,8 @@ MAX_PAGES = 300
 MARGIN_FRAC = 0.06       # blocks this close to the top/bottom edge and short are running headers/footers/page numbers
 HEADING_SIZE_RATIO = 1.12
 HEADING_MAX_CHARS = 150
+# C0 controls except tab/newline, DEL, and lone surrogates: PDFs emit them, and NUL / surrogates are rejected by Postgres / UTF-8
+_BAD_CHARS = re.compile("[\x00-\x08\x0b-\x1f\x7f\ud800-\udfff]")
 
 
 class PdfError(ValueError):
@@ -79,7 +81,8 @@ def parse_pdf(data: bytes) -> ParsedPdf:
     if doc.needs_pass or doc.page_count == 0 or doc.page_count > MAX_PAGES:
         raise PdfError("encrypted, empty, or too many pages")
 
-    pages = [_raw_blocks(p) for p in doc]
+    pages = [[(_BAD_CHARS.sub("", b[0]).strip(), *b[1:]) for b in _raw_blocks(p)] for p in doc]  # one choke point for bad chars
+    pages = [[b for b in pg if b[0]] for pg in pages]
     pages = [[b for b in pg if not (b[3] and (len(b[0]) < 80 or b[0].strip().isdigit()))] for pg in pages]
     with_text = sum(1 for pg in pages if sum(len(b[0]) for b in pg) >= 20)
     if with_text < 0.5 * len(pages):

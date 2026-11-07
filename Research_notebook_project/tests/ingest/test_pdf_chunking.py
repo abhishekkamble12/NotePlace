@@ -149,3 +149,17 @@ def test_heading_is_never_a_chunk_by_itself(monkeypatch):
     assert all((c.start, c.end) not in heads for c in chunks)
     assert doc.snapshot[chunks[0].start:chunks[0].end].startswith("Short Head")
     assert wc(doc.snapshot[chunks[0].start:chunks[0].end]) <= chunking.HARD_MAX_TOKENS
+
+
+def test_control_characters_never_reach_the_snapshot(monkeypatch):
+    """Found on a real arXiv PDF: extracted text can contain NUL, which Postgres rejects. Stripped before offsets are computed."""
+    from app.ingest import pdf as pdfmod
+    real = pdfmod._raw_blocks
+    monkeypatch.setattr(pdfmod, "_raw_blocks", lambda page: [("Head\x00ing", 18.0, 0.0, False), ("Body\x00 text\x0b with \x1bcontrol\ud800 chars here.", 10.0, 0.0, False)] if page.number == 0 else real(page))
+    doc = parse_pdf(make_pdf([[("x", 10)]]))
+    assert not any(ord(c) < 32 and c not in "\n\t" or 0xD800 <= ord(c) <= 0xDFFF for c in doc.snapshot)
+    snap = doc.snapshot
+    assert "Heading" in snap and "Body text with control chars here." in snap
+    for b in doc.blocks:  # offsets still index the cleaned snapshot
+        assert snap[b.start:b.end].strip() == snap[b.start:b.end] and snap[b.start:b.end]
+    snap.encode("utf-8")  # must be encodable

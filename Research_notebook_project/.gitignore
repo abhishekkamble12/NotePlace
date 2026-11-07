@@ -45,3 +45,7 @@ secrets.json
 Thumbs.db
 .DS_Store
 mutants/
+
+# QASPER source PDFs/raw dumps (88 MB); rebuild with scripts/build_qasper_gold.py
+evals/qasper/pdfs/
+evals/qasper/raw/

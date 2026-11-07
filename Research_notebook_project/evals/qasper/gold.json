@@ -1,0 +1,3491 @@
+{
+ "meta": {
+  "source": "QASPER dev v0.3 (Allen AI, CC BY 4.0)",
+  "dataset_tgz_sha256": "a28fdf966db827bcee3d873107d6b6669864fb7ca8fbf73a192f5e39191bdb5a",
+  "selection": "first N sorted ids with usable PDF and >=1 aligned question",
+  "align_min_score": 90,
+  "counts": {
+   "evidence_total": 360,
+   "unaligned_dropped": 74,
+   "aligned_exact": 82,
+   "aligned_fuzzy": 204,
+   "questions_seen": 205,
+   "questions_unanswerable_or_no_evidence": 14,
+   "questions_no_aligned_gold": 25
+  },
+  "papers": 60,
+  "questions": 166,
+  "rejected_papers": {
+   "1608.01084": "no_question_with_aligned_gold"
+  },
+  "git": "6534d3accac65747cd571967c78331e7a54c4e6e"
+ },
+ "papers": {
+  "1503.00841": {
+   "title": "Robustly Leveraging Prior Knowledge in Text Classification",
+   "pdf_sha256": "9ca21eaff3c946e95cc649e627db3a4b9e69d0f7397bae3e30d39be495261ba5",
+   "snapshot_sha256": "55a05cfd431b9bc437eb53297bfeb40d091b0b6ca0281825887692b2d0b13726",
+   "n_pages": 9,
+   "snapshot_chars": 30288
+  },
+  "1601.02403": {
+   "title": "Argumentation Mining in User-Generated Web Discourse",
+   "pdf_sha256": "0366d7449aff5a067f3b2c6f9680989dd3b9c2063f8a8f70c46b8c2dc75e22b6",
+   "snapshot_sha256": "abc5f63ab5fcb9c340ac4cc3a8c852f0c14bbd7e99f9da5f6f7a5c88fbcf39bc",
+   "n_pages": 55,
+   "snapshot_chars": 200377
+  },
+  "1603.01514": {
+   "title": "A Bayesian Model of Multilingual Unsupervised Semantic Role Induction",
+   "pdf_sha256": "deaebadde4cccedcb498d456a81ea72b91a6370e7df9cf069a5320a8fe8ee89a",
+   "snapshot_sha256": "bf351d31da2607f1f55fb23a2dc11729850257a2b8806f33dd85afc384301aeb",
+   "n_pages": 10,
+   "snapshot_chars": 37892
+  },
+  "1603.01987": {
+   "title": "A matter of words: NLP for quality evaluation of Wikipedia medical articles",
+   "pdf_sha256": "33498174effae81e2de231177cde67731846a499144be561987cebdee3727917",
+   "snapshot_sha256": "7fda1c8487327582bfb3c6c184b19f1e211c877013b96d0fa7fc1d18c74fb5aa",
+   "n_pages": 17,
+   "snapshot_chars": 42375
+  },
+  "1603.08594": {
+   "title": "Prepositional Attachment Disambiguation Using Bilingual Parsing and Alignments",
+   "pdf_sha256": "763490e6b0705643cb609bd2f4bc6fb8524a99b2b62eb03671bedc14f5ccbb47",
+   "snapshot_sha256": "3a1584b65ae1c610d69f01b14c469320e53b78725c6171664f8a347888911405",
+   "n_pages": 6,
+   "snapshot_chars": 19558
+  },
+  "1603.09631": {
+   "title": "Data Collection for Interactive Learning through the Dialog",
+   "pdf_sha256": "4a05d9d6bf71867ab757a554ba78534f750d12d1c946088c6d6d8f27e39e71af",
+   "snapshot_sha256": "4aa9a3142bd7a12b2b0c76657087254a02e25900ad20d5529404dd029391edd3",
+   "n_pages": 5,
+   "snapshot_chars": 22017
+  },
+  "1604.00400": {
+   "title": "Revisiting Summarization Evaluation for Scientific Articles",
+   "pdf_sha256": "0b2fea89e21a497e5156bc0d952a4b05781956ba0fced4a9c115aee920e6b790",
+   "snapshot_sha256": "6a3a3d6861cf3923dbb5448c752f510a26c05201241123cdf8e195eaa8833b04",
+   "n_pages": 8,
+   "snapshot_chars": 43766
+  },
+  "1604.00727": {
+   "title": "Character-Level Question Answering with Attention",
+   "pdf_sha256": "61043bc965a54d49ca0d2ada1f5ca826ddadb7d1cecf06bbfd2e6a5979c34550",
+   "snapshot_sha256": "07300e1f1f1c54255f45b4423aa1fa8726e1b178bdca96be543b4ea4100787f3",
+   "n_pages": 10,
+   "snapshot_chars": 36620
+  },
+  "1604.03114": {
+   "title": "Conversational flow in Oxford-style debates",
+   "pdf_sha256": "5f47e1af69c9a3773dd5b1cc848995441274fc4fe23cbf7d3cdc169d6b280ac4",
+   "snapshot_sha256": "e6836a77aaeddcefe5647ed2e5050d3d0f4f84d81dca014e15de8cb827a7764c",
+   "n_pages": 6,
+   "snapshot_chars": 26143
+  },
+  "1604.05372": {
+   "title": "Clustering Comparable Corpora of Russian and Ukrainian Academic Texts: Word Embeddings and Semantic Fingerprints",
+   "pdf_sha256": "79e36b639242ae0f0249e429551a39db815f984ed1c82ae8411416278020b32c",
+   "snapshot_sha256": "94c9e6105fccaaa2efc2b2ddc7906b470c1bebd0c316b3d00a3fb6c0f658fa36",
+   "n_pages": 8,
+   "snapshot_chars": 43189
+  },
+  "1604.08504": {
+   "title": "Detecting\"Smart\"Spammers On Social Network: A Topic Model Approach",
+   "pdf_sha256": "75fb6ae8b76632124856273be526fc9f278f942cc55ea5f986d5772a72abddf7",
+   "snapshot_sha256": "e1d184b79af8310e446de50a5ce79fec083cc07272c4ba3c781ab5af9d940146",
+   "n_pages": 6,
+   "snapshot_chars": 20343
+  },
+  "1605.03481": {
+   "title": "Tweet2Vec: Character-Based Distributed Representations for Social Media",
+   "pdf_sha256": "08f4f012ea69174235c5b9cc07d1bc49b7c510db981054ef08b66718cea2a8b8",
+   "snapshot_sha256": "1cd74292b56628f14ce1ddaeecc6d063bb4ec27707c80b7a1f177f7c3ed96f74",
+   "n_pages": 6,
+   "snapshot_chars": 22227
+  },
+  "1605.06083": {
+   "title": "Stereotyping and Bias in the Flickr30K Dataset",
+   "pdf_sha256": "8de48f00d6f9a614a9608f0df4d63d471e7fb25634bcb91a6f1cec637c76d47c",
+   "snapshot_sha256": "c78b7df73de21a02eeb223dfdf6b76b8d4bcf62fffcd00165377e4fca39fe633",
+   "n_pages": 4,
+   "snapshot_chars": 21903
+  },
+  "1605.07333": {
+   "title": "Combining Recurrent and Convolutional Neural Networks for Relation Classification",
+   "pdf_sha256": "61e1a178dccc8524f26f5b8284ce55b3432cd4b0982fbb9271047d4afa8305e9",
+   "snapshot_sha256": "3c3a1703e93c08e5488ebe6a26daa1732907e3f8ef9fede2bce35b218c848b3e",
+   "n_pages": 6,
+   "snapshot_chars": 23143
+  },
+  "1606.02891": {
+   "title": "Edinburgh Neural Machine Translation Systems for WMT 16",
+   "pdf_sha256": "7bb61070f38121bc173340707973c087e67ecdb0989fa84c62a622708cf1cec8",
+   "snapshot_sha256": "df155ebc067a6031c7631ff2dfb6b7bace222be204974f865f2e00221f5fd8b0",
+   "n_pages": 6,
+   "snapshot_chars": 20755
+  },
+  "1606.03676": {
+   "title": "External Lexical Information for Multilingual Part-of-Speech Tagging",
+   "pdf_sha256": "cf48c8b560da2edc5d8a9c505abfb5f036c26876b0ff6fe9709f5d04bc6e2afa",
+   "snapshot_sha256": "7a37d9a9da7297fcdc7a09b0febf972c42249507c356993cc8bbcd5578305e1b",
+   "n_pages": 18,
+   "snapshot_chars": 38910
+  },
+  "1608.01884": {
+   "title": "Winograd Schemas and Machine Translation",
+   "pdf_sha256": "3785e230d2ce4d891fb0201aec07d19a9a6a3e5f162efdde9c96cb4fc0bb1727",
+   "snapshot_sha256": "8130c39419e54512f2166bb6a5c8e39ec8539f7ab038056eb663aa1fe88c47aa",
+   "n_pages": 6,
+   "snapshot_chars": 16524
+  },
+  "1608.06757": {
+   "title": "Robust Named Entity Recognition in Idiosyncratic Domains",
+   "pdf_sha256": "3a0f5e9e8d6aefa56893c5a610fef22abef263e0c190035b7d9a2d9f4db7d2dc",
+   "snapshot_sha256": "5f8778b5e80b378e7086a00fcaaa680b2e9d61e86d27e289e67928bc0fb2f879",
+   "n_pages": 10,
+   "snapshot_chars": 39323
+  },
+  "1608.08188": {
+   "title": "Visual Question: Predicting If a Crowd Will Agree on the Answer",
+   "pdf_sha256": "a8fb3a1b549ad688b0df7411c6d4d780fbe43a56a3c786078039d278a5f758e6",
+   "snapshot_sha256": "48a9a28350950cee2efc539074b5b0e35d3adab855f7fcc7296cf22a45434ad0",
+   "n_pages": 10,
+   "snapshot_chars": 50330
+  },
+  "1609.00425": {
+   "title": "Identifying Dogmatism in Social Media: Signals and Models",
+   "pdf_sha256": "777a7a8486c7d655c3cafa39cce9c91d721ad230f13f5bb836129f4f9457110a",
+   "snapshot_sha256": "acbf9e09b1ca51fcf2184d59d5a09db9e909879590bbb7df45c5b966c9b9c7a1",
+   "n_pages": 10,
+   "snapshot_chars": 39208
+  },
+  "1609.00559": {
+   "title": "Improving Correlation with Human Judgments by Integrating Semantic Similarity with Second--Order Vectors",
+   "pdf_sha256": "3c534ca87e78a09abfeb5e8f5b652e6e27b0024c7ecb8d865fc89635c1799482",
+   "snapshot_sha256": "23d6ab77fd6fe9caee20a6d00a6e9832de185c9f78cb751c6695b728fffecdfb",
+   "n_pages": 10,
+   "snapshot_chars": 41493
+  },
+  "1610.00956": {
+   "title": "Embracing data abundance: BookTest Dataset for Reading Comprehension",
+   "pdf_sha256": "feca90ffee2f82acbb07f0027c7caa3fc07cdc5f3d1c891139f91048b3701daf",
+   "snapshot_sha256": "9ece9f3d7f7da8a4d528a9db0c40ba19cf3ba28dbcdbe154c84d9a448601d08c",
+   "n_pages": 10,
+   "snapshot_chars": 41114
+  },
+  "1610.07809": {
+   "title": "How Document Pre-processing affects Keyphrase Extraction Performance",
+   "pdf_sha256": "891d83f1576ec3f7919d8092e664f9ba9cda95804a7f2e823fdf9c5da71a8265",
+   "snapshot_sha256": "be3e68b9ff2c0225ca5aee35c15c0083863ee0e6481aeb6e9d085f75745d8c82",
+   "n_pages": 8,
+   "snapshot_chars": 25934
+  },
+  "1610.08815": {
+   "title": "A Deeper Look into Sarcastic Tweets Using Deep Convolutional Neural Networks",
+   "pdf_sha256": "21ecb52240460890a581e724d20b2c8081ca3b6e357ff2d8889b1a4df27cb0e5",
+   "snapshot_sha256": "403b57564a7ede7f956d55f0c83297f81079f67d3abc549f85a14a914b5e4789",
+   "n_pages": 13,
+   "snapshot_chars": 45631
+  },
+  "1610.09225": {
+   "title": "Sentiment Analysis of Twitter Data for Predicting Stock Market Movements",
+   "pdf_sha256": "92c6f9a146739433c9657cc0a3a8ca38f302250a75072c74dccbde14239e5653",
+   "snapshot_sha256": "427d7dcd6647af73bf7ac92647172bc4c0334efc55feb8eb3187ab9044e74c65",
+   "n_pages": 6,
+   "snapshot_chars": 23866
+  },
+  "1611.01576": {
+   "title": "Quasi-Recurrent Neural Networks",
+   "pdf_sha256": "15064c8e9bfb00252ae63d75d7391aba328bc3f239f146cdd8b303180a628399",
+   "snapshot_sha256": "2c4773d6d00e6f3090139f973e8239e91c0555dc464695a2acfe52ba7de0e3f7",
+   "n_pages": 11,
+   "snapshot_chars": 35152
+  },
+  "1611.02988": {
+   "title": "Distant supervision for emotion detection using Facebook reactions",
+   "pdf_sha256": "f8647897f3156de0f69e90bf3ceba1c863ef791e91e2984db05d2f974a19c8ea",
+   "snapshot_sha256": "4f25893e481b8d4d6ee01ae2356fa93600e68d8680d58616f2b5ce906d70f42a",
+   "n_pages": 10,
+   "snapshot_chars": 37830
+  },
+  "1611.03599": {
+   "title": "UTCNN: a Deep Learning Model of Stance Classificationon on Social Media Text",
+   "pdf_sha256": "b4d5ba7265c6e169f3aab007f93663536cc87c9438a85dd342a0ef7fd6f6652f",
+   "snapshot_sha256": "275db42fa9ac008b01fe1123625d98bc4c1a246227c665b7e4885045e1ea9e8c",
+   "n_pages": 11,
+   "snapshot_chars": 41261
+  },
+  "1611.04798": {
+   "title": "Toward Multilingual Neural Machine Translation with Universal Encoder and Decoder",
+   "pdf_sha256": "807a8f7ac1a8cfe8c7b659548f73fa782f05d1957c2281fd1ff807bd44dad613",
+   "snapshot_sha256": "a6365fe285d0f3dd1b693e63052475bd4c164b809eb3dbabc522207632a6999f",
+   "n_pages": 10,
+   "snapshot_chars": 38418
+  },
+  "1611.08661": {
+   "title": "Knowledge Graph Representation with Jointly Structural and Textual Encoding",
+   "pdf_sha256": "78d18d721ce2ca5c6beda04388fa8da29f56e7bdfa6c438ceea115f935e37706",
+   "snapshot_sha256": "150f398990064556eb02cf554375a8969ed82ba41fb5bf5f4548e5ce5fcaea3d",
+   "n_pages": 7,
+   "snapshot_chars": 32677
+  },
+  "1612.02482": {
+   "title": "Improving the Performance of Neural Machine Translation Involving Morphologically Rich Languages",
+   "pdf_sha256": "c039656781f1e752cd1387e49696029228604b0549b6d630bd2e5241314c8378",
+   "snapshot_sha256": "8b12684d39a70e98ce0280549031f5df6ca6bfce4b2949065d00543afaad4d77",
+   "n_pages": 22,
+   "snapshot_chars": 49875
+  },
+  "1612.03226": {
+   "title": "Active Learning for Speech Recognition: the Power of Gradients",
+   "pdf_sha256": "8475795b62187d16625ed7ea7d73203d5039ef345e25ddfafe78c7a2f5f4e0c8",
+   "snapshot_sha256": "2cbd67306e0feaf23cf03e578bd135d18afb8eee2284978bc47734a0f01676ef",
+   "n_pages": 5,
+   "snapshot_chars": 15672
+  },
+  "1612.06685": {
+   "title": "Stateology: State-Level Interactive Charting of Language, Feelings, and Values",
+   "pdf_sha256": "b5e1a84d9dcfc5cbd19927f9a618869365b2ac8af6f35ea21270fbbaa720493f",
+   "snapshot_sha256": "5c13fdc652a35cb5ba8016cea9a367d8afd5333eb5c1d8d82728aae2bf019936",
+   "n_pages": 5,
+   "snapshot_chars": 14133
+  },
+  "1612.08205": {
+   "title": "Predicting the Industry of Users on Social Media",
+   "pdf_sha256": "e354482251781d40bc50db15cdb24fdfe2fcd6482f5468fdf843f8b1d3922cc7",
+   "snapshot_sha256": "61f3a47e4669aebfa98c3dc57b2c90988803b767d1fd98cf9a689692cdad4200",
+   "n_pages": 8,
+   "snapshot_chars": 39950
+  },
+  "1701.02962": {
+   "title": "Distinguishing Antonyms and Synonyms in a Pattern-based Neural Network",
+   "pdf_sha256": "6df73c8ce9c4782b68d1d3d7f01568d8b7448028b44cc13ac3421dfb9a64f363",
+   "snapshot_sha256": "db5faa4ec8ed4d55f77a53f26eb5fee3bc39f35fbe64adc56a8005cf0c7291b4",
+   "n_pages": 10,
+   "snapshot_chars": 38054
+  },
+  "1701.04056": {
+   "title": "Dialog Context Language Modeling with Recurrent Neural Networks",
+   "pdf_sha256": "6b186210d1032112f0612ce709842b15246275e37b893a7631282c084eda0a01",
+   "snapshot_sha256": "7cb832db69dd0002ab3e8b3c1a9fb0bacfb6ec10afd8bf645a7855befb65e385",
+   "n_pages": 5,
+   "snapshot_chars": 21385
+  },
+  "1701.05574": {
+   "title": "Harnessing Cognitive Features for Sarcasm Detection",
+   "pdf_sha256": "6ff8ec71313b548bd235cb77facc620249e8e6e33ba924354e1d601e16a9a5d7",
+   "snapshot_sha256": "40dd0043b417be6e2503263f236979cb5c9da883e8c5cfdbd45f65cf97bf52be",
+   "n_pages": 11,
+   "snapshot_chars": 42253
+  },
+  "1701.08229": {
+   "title": "Feature Studies to Inform the Classification of Depressive Symptoms from Twitter Data for Population Health",
+   "pdf_sha256": "a865c11647a8517d29e9d8c84822f2a533a6780563c4787b78c3707837e10113",
+   "snapshot_sha256": "e9ff269f5506022d880e40cc477af4d6b03eb4f29cdc47980cff70a344b435da",
+   "n_pages": 5,
+   "snapshot_chars": 21560
+  },
+  "1702.03342": {
+   "title": "Learning Concept Embeddings for Efficient Bag-of-Concepts Densification",
+   "pdf_sha256": "eb2ad6df69b659090de77154b721c136a0beedb7c39d2dc9a197d1e6ebdff812",
+   "snapshot_sha256": "b1aad11b447ec70342616fdefefc5890b18091e62b7af53e4ac2ccbd0d01aceb",
+   "n_pages": 25,
+   "snapshot_chars": 68696
+  },
+  "1702.03856": {
+   "title": "Towards speech-to-text translation without speech recognition",
+   "pdf_sha256": "c22c8c7c02348f9883856dc6bedb472ad918e55284b8a998791cc7528eb80942",
+   "snapshot_sha256": "4340c18594a72bc48e7d0e705ecfd3c03c80a4a9c0fd412d08e73187cce354db",
+   "n_pages": 6,
+   "snapshot_chars": 22322
+  },
+  "1703.04001": {
+   "title": "Language Use Matters: Analysis of the Linguistic Structure of Question Texts Can Characterize Answerability in Quora",
+   "pdf_sha256": "d2985a4bfcf604f126be5fe253fd614cb20983f7fac848c8c812c225f78ab303",
+   "snapshot_sha256": "0aa7c1a97e61756a0e4ec1a32c7e644866e5506779b2a34ece24099aefc4a5f7",
+   "n_pages": 5,
+   "snapshot_chars": 24343
+  },
+  "1703.07090": {
+   "title": "Deep LSTM for Large Vocabulary Continuous Speech Recognition",
+   "pdf_sha256": "35c95e7a3d37deae4e0d61fb68a99c0a1dd6789192a6106b900a439829222786",
+   "snapshot_sha256": "6b6719356ae983186b0c60a195678abfbea53316fa1f9a410d6f29556d0654bc",
+   "n_pages": 8,
+   "snapshot_chars": 35962
+  },
+  "1703.07476": {
+   "title": "Topic Identification for Speech without ASR",
+   "pdf_sha256": "ef3fc15642a984923cb7d82cfafebbd5e9851d21f507d7022bb99e6ba534307e",
+   "snapshot_sha256": "01aa1b0bfe9bbb0d21c3c592f3a2b42bd64c3ca70b4aa9b3ac7f405e6bfb7498",
+   "n_pages": 5,
+   "snapshot_chars": 30230
+  },
+  "1703.10344": {
+   "title": "Automated News Suggestions for Populating Wikipedia Entity Pages",
+   "pdf_sha256": "f20ca8357ff02fe03415a9792568c12a02a42fe9c5bc9cfc6af1cc0e11d3b447",
+   "snapshot_sha256": "47439afdf6e0f7b7fb7f7ca9c0ae3b21b0dfacfff80a4e3d2375b62ae9128693",
+   "n_pages": 12,
+   "snapshot_chars": 61546
+  },
+  "1704.04452": {
+   "title": "Bringing Structure into Summaries: Crowdsourcing a Benchmark Corpus of Concept Maps",
+   "pdf_sha256": "6e5137109ceca8b3aa7db102ddd62adf09ade1dcd8b0fc5c158f012c159cb561",
+   "snapshot_sha256": "35d7cbc2ba420db43c861237b76a20a02b0dfc9239ebf70bb37da5b135454b55",
+   "n_pages": 11,
+   "snapshot_chars": 47128
+  },
+  "1704.06194": {
+   "title": "Improved Neural Relation Detection for Knowledge Base Question Answering",
+   "pdf_sha256": "bc34b62565b3c0adb10bd495455c72633f7534283e397ce794e60c0dc3495819",
+   "snapshot_sha256": "a5b120611e6a99c2dc6f98b46c9407a18071a660b2e3c98a9a5150e93e03e255",
+   "n_pages": 12,
+   "snapshot_chars": 51920
+  },
+  "1705.01214": {
+   "title": "A Hybrid Architecture for Multi-Party Conversational Systems",
+   "pdf_sha256": "73641a8faa36de75265edccc8102d9c37cc006babeae5d6144af105b4867b51c",
+   "snapshot_sha256": "79c39deae74eabbb0e98f2d487cc982960931b2298914533adac27bc7989ae00",
+   "n_pages": 40,
+   "snapshot_chars": 102769
+  },
+  "1705.01265": {
+   "title": "On the effectiveness of feature set augmentation using clusters of word embeddings",
+   "pdf_sha256": "9d4b502bcc6d4e71dfc5c2d1d8533983e7985ca10532106434641b483bb5f69d",
+   "snapshot_sha256": "6b6356ba5557d8b13f1d513f522c5f6777796353ee9b28da27d00ee911cdf3de",
+   "n_pages": 7,
+   "snapshot_chars": 27165
+  },
+  "1705.04153": {
+   "title": "Dynamic Compositional Neural Networks over Tree Structure",
+   "pdf_sha256": "3f7bdf47100c0e36c2d3d2bceb1c55c479dce5432a5f8aa429d5fb6a51fd87af",
+   "snapshot_sha256": "2f8b3ab07b84072159247c5999dee53496f920f690589f1542cc60fdb3c503d0",
+   "n_pages": 8,
+   "snapshot_chars": 33383
+  },
+  "1705.05437": {
+   "title": "A Biomedical Information Extraction Primer for NLP Researchers",
+   "pdf_sha256": "37e66de6cbb535c41deb4ee8ad128b8c4191ac004fa3b3788f1e5659f7ce1393",
+   "snapshot_sha256": "c03b507707d8f0e1dbfe2c4dfd9dcbcbce825630fcb74ff082bb3dc69a933015",
+   "n_pages": 7,
+   "snapshot_chars": 31077
+  },
+  "1706.00139": {
+   "title": "Natural Language Generation for Spoken Dialogue System using RNN Encoder-Decoder Networks",
+   "pdf_sha256": "5936d5e5c341c622ae45f6a7fc2701d677ff09fdcc98b3eb27256277b627383f",
+   "snapshot_sha256": "7e69c0aa7361016d2173aa6717327f23c2a924e45d4f87809debc5f6246060cf",
+   "n_pages": 10,
+   "snapshot_chars": 35445
+  },
+  "1706.01678": {
+   "title": "Text Summarization using Abstract Meaning Representation",
+   "pdf_sha256": "aa5b9a53432ad388ded276ba60d77b5a3dcaa39f42b9e1d6297339fb8f63f797",
+   "snapshot_sha256": "ccf90d4beb40a500713e2e38e90d6d49dbc3e1ea3158a96241fd90ad0839d1c6",
+   "n_pages": 10,
+   "snapshot_chars": 38905
+  },
+  "1706.01875": {
+   "title": "Measuring Offensive Speech in Online Political Discourse",
+   "pdf_sha256": "55579f5d62b2cdce0634a6a634c8d0de66ade365ee06b211f4d0932318442365",
+   "snapshot_sha256": "90afd0c9e7e853acc5ec85ef35711e4b1e4f2cf5a0d6f0effbd66da944441d73",
+   "n_pages": 7,
+   "snapshot_chars": 28390
+  },
+  "1706.06894": {
+   "title": "Stance Detection in Turkish Tweets",
+   "pdf_sha256": "40054fb96e9624b7043816d021f7dcbdaa3d1a7771bac57c1328c6e15b40449f",
+   "snapshot_sha256": "1c8d53fbf71d1371e71db440390d3d71e419386bda68fea437d086b19d57c52d",
+   "n_pages": 4,
+   "snapshot_chars": 21952
+  },
+  "1706.08198": {
+   "title": "English-Japanese Neural Machine Translation with Encoder-Decoder-Reconstructor",
+   "pdf_sha256": "3a42edc60140448e205650563a6ae0872303b050a1c967488fed53fedb6e42de",
+   "snapshot_sha256": "ed3dd5c12b45174b25755f36da451fb4fbd4de7f5c5b8ae1dd2e32bc17a0935f",
+   "n_pages": 8,
+   "snapshot_chars": 22113
+  },
+  "1706.09673": {
+   "title": "Improving Distributed Representations of Tweets - Present and Future",
+   "pdf_sha256": "d63b2ec40a600509efd5c992060e7e266530a4dbf9a80f46902b972a29895291",
+   "snapshot_sha256": "f61e0513e8c1dc9477c17b3df84af68687c24b522ac72ecae6ddbe03fd758ad5",
+   "n_pages": 7,
+   "snapshot_chars": 27543
+  },
+  "1707.03569": {
+   "title": "Multitask Learning for Fine-Grained Twitter Sentiment Analysis",
+   "pdf_sha256": "95530cd6071704e7de0ef38d3064f6424757ad9d7731c402520729042a75343a",
+   "snapshot_sha256": "944db633ae0e1afa631c70ab4d6cd8156222312e7d4ee848adcc23b99347d45e",
+   "n_pages": 5,
+   "snapshot_chars": 25434
+  },
+  "1707.05236": {
+   "title": "Artificial Error Generation with Machine Translation and Syntactic Patterns",
+   "pdf_sha256": "1b4e52375eaf83488231d083e612b0d169bd1ae23bc35fc5f0a5483f30772cb7",
+   "snapshot_sha256": "2c3f258186892e8396eee8e3992bbcd7039fdabca721285a014dc6c363a6eb7b",
+   "n_pages": 6,
+   "snapshot_chars": 23194
+  },
+  "1707.06806": {
+   "title": "Shallow reading with Deep Learning: Predicting popularity of online content using only its title",
+   "pdf_sha256": "1e9b4652d66996665f545ebdf01876785259e48cb0e22410b6c3f6e18b6e8cd6",
+   "snapshot_sha256": "4b1275225a6d8a78ab7fe3818702fafac5973452cc803029357ebb8e74c87f50",
+   "n_pages": 10,
+   "snapshot_chars": 23089
+  },
+  "1708.01464": {
+   "title": "Massively Multilingual Neural Grapheme-to-Phoneme Conversion",
+   "pdf_sha256": "dc0fbfec99aaafac13a73b3934d38f8d13b2669d538dab2c93716041b22c2478",
+   "snapshot_sha256": "4ccd2549c50379376cfef740a58144e471860c1dc9ef0efccd2b5edf77422771",
+   "n_pages": 8,
+   "snapshot_chars": 28755
+  }
+ },
+ "questions": [
+  {
+   "id": "50be4a737dc0951b35d139f51075011095d77f2a",
+   "paper": "1503.00841",
+   "question": "What background knowledge do they leverage?",
+   "gold": [
+    {
+     "start": 5107,
+     "end": 5446,
+     "score": 95.3,
+     "method": "fuzzy"
+    },
+    {
+     "start": 12179,
+     "end": 12862,
+     "score": 95.4,
+     "method": "fuzzy"
+    },
+    {
+     "start": 11369,
+     "end": 11711,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 3
+  },
+  {
+   "id": "6becff2967fe7c5256fe0b00231765be5b9db9f1",
+   "paper": "1503.00841",
+   "question": "What are the three regularization terms?",
+   "gold": [
+    {
+     "start": 3730,
+     "end": 4311,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "76121e359dfe3f16c2a352bd35f28005f2a40da3",
+   "paper": "1503.00841",
+   "question": "What NLP tasks do they consider?",
+   "gold": [
+    {
+     "start": 10788,
+     "end": 11341,
+     "score": 96.6,
+     "method": "fuzzy"
+    },
+    {
+     "start": 11369,
+     "end": 11711,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "02428a8fec9788f6dc3a86b5d5f3aa679935678d",
+   "paper": "1503.00841",
+   "question": "How do they define robustness of a model?",
+   "gold": [
+    {
+     "start": 7441,
+     "end": 7978,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 13755,
+     "end": 13945,
+     "score": 98.6,
+     "method": "fuzzy"
+    },
+    {
+     "start": 16751,
+     "end": 17335,
+     "score": 98.5,
+     "method": "fuzzy"
+    },
+    {
+     "start": 18559,
+     "end": 18836,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 2131,
+     "end": 2760,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 2783,
+     "end": 3572,
+     "score": 93.0,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 6
+  },
+  {
+   "id": "2cd37743bcc7ea3bd405ce6d91e79e5339d7642e",
+   "paper": "1601.02403",
+   "question": "Do they report results only on English data?",
+   "gold": [
+    {
+     "start": 44579,
+     "end": 45711,
+     "score": 93.3,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "eac9dae3492e17bc49c842fb566f464ff18c049b",
+   "paper": "1601.02403",
+   "question": "What argument components do the ML methods aim to identify?",
+   "gold": [
+    {
+     "start": 65073,
+     "end": 65786,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "7697baf8d8d582c1f664a614f6332121061f87db",
+   "paper": "1601.02403",
+   "question": "Which machine learning methods are used in experiments?",
+   "gold": [
+    {
+     "start": 118760,
+     "end": 118924,
+     "score": 90.2,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "1cb100182508cf55b3509283c0e2bbcd527d625e",
+   "paper": "1601.02403",
+   "question": "How is the data in the new corpus come sourced?",
+   "gold": [
+    {
+     "start": 45732,
+     "end": 46484,
+     "score": 99.3,
+     "method": "fuzzy"
+    },
+    {
+     "start": 44579,
+     "end": 45711,
+     "score": 93.3,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "d6401cece55a14d2a35ba797a0878dfe2deabedc",
+   "paper": "1601.02403",
+   "question": "What challenges do different registers and domains pose to this task?",
+   "gold": [
+    {
+     "start": 44579,
+     "end": 45711,
+     "score": 93.3,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "6bf5620f295b5243230bc97b340fae6e92304595",
+   "paper": "1603.01514",
+   "question": "What baseline model is used?",
+   "gold": [
+    {
+     "start": 17445,
+     "end": 17830,
+     "score": 95.3,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "4986f420884f917d1f60d3cea04dc8e64d3b5bf1",
+   "paper": "1603.01514",
+   "question": "Which additional latent variables are used in the model?",
+   "gold": [
+    {
+     "start": 10334,
+     "end": 11093,
+     "score": 99.8,
+     "method": "fuzzy"
+    },
+    {
+     "start": 2861,
+     "end": 3580,
+     "score": 94.3,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "747b847d687f703cc20a87877c5b138f26ff137d",
+   "paper": "1603.01514",
+   "question": "Which parallel corpora are used?",
+   "gold": [
+    {
+     "start": 19621,
+     "end": 21291,
+     "score": 90.1,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "111afb77cfbf4c98e0458606378fa63a0e965e36",
+   "paper": "1603.01514",
+   "question": "Overall, does having parallel data improve semantic role induction across multiple languages?",
+   "gold": [
+    {
+     "start": 30926,
+     "end": 32290,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "6568a31241167f618ef5ede939053feaa2fb0d7e",
+   "paper": "1603.01514",
+   "question": "Do they add one latent variable for each language pair in their Bayesian model?",
+   "gold": [
+    {
+     "start": 10334,
+     "end": 11093,
+     "score": 99.8,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "50cc6c5f2dcf5fb87b56007f6a825fa7c90b64ed",
+   "paper": "1603.01514",
+   "question": "What does an individual model consist of?",
+   "gold": [
+    {
+     "start": 5324,
+     "end": 5601,
+     "score": 94.7,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "0fc2b5bc2ead08a6fe0280fb3a47477c6df1587c",
+   "paper": "1603.01514",
+   "question": "Do they improve on state-of-the-art semantic role induction?",
+   "gold": [
+    {
+     "start": 21596,
+     "end": 22328,
+     "score": 96.9,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "6a633811019e9323dc8549ad540550d27aa6d972",
+   "paper": "1603.01987",
+   "question": "Is it valid to presume a bad medical wikipedia article should not contain much domain-specific jargon?",
+   "gold": [
+    {
+     "start": 15942,
+     "end": 16587,
+     "score": 99.6,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "9cf070d6671ee4a6353f79a165aa648309e01295",
+   "paper": "1603.08594",
+   "question": "What is the size of the parallel corpus used to train the model constraints?",
+   "gold": [
+    {
+     "start": 13015,
+     "end": 13717,
+     "score": 91.2,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "87bc6f83f7f90df3c6c37659139b92657c3f7a38",
+   "paper": "1603.08594",
+   "question": "How does enforcing agreement between parse trees work across different languages?",
+   "gold": [
+    {
+     "start": 7050,
+     "end": 8174,
+     "score": 97.7,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "455d4ef8611f62b1361be4f6387b222858bb5e56",
+   "paper": "1603.09631",
+   "question": "How was this data collected?",
+   "gold": [
+    {
+     "start": 9087,
+     "end": 9243,
+     "score": 99.2,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "bc16ce6e9c61ae13d46970ebe6c4728a47f8f425",
+   "paper": "1603.09631",
+   "question": "What is the average length of dialog?",
+   "gold": [
+    {
+     "start": 13367,
+     "end": 13622,
+     "score": 93.3,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "c49ee6ac4dc812ff84d255886fd5aff794f53c39",
+   "paper": "1604.00400",
+   "question": "Do the authors report results only on English data?",
+   "gold": [
+    {
+     "start": 17496,
+     "end": 17805,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 18465,
+     "end": 18668,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 18670,
+     "end": 18791,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 3
+  },
+  {
+   "id": "3f856097be2246bde8244add838e83a2c793bd17",
+   "paper": "1604.00400",
+   "question": "In the proposed metric, how is content relevance measured?",
+   "gold": [
+    {
+     "start": 10821,
+     "end": 12471,
+     "score": 99.0,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "bf52c01bf82612d0c7bbf2e6a5bb2570c322936f",
+   "paper": "1604.00400",
+   "question": "What different correlations result when using different variants of ROUGE scores?",
+   "gold": [
+    {
+     "start": 27362,
+     "end": 27679,
+     "score": 99.6,
+     "method": "fuzzy"
+    },
+    {
+     "start": 30715,
+     "end": 31595,
+     "score": 93.5,
+     "method": "fuzzy"
+    },
+    {
+     "start": 36541,
+     "end": 37483,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 25594,
+     "end": 25965,
+     "score": 95.5,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 4
+  },
+  {
+   "id": "74e866137b3452ec50fb6feaf5753c8637459e62",
+   "paper": "1604.00400",
+   "question": "What manual Pyramid scores are used?",
+   "gold": [
+    {
+     "start": 17866,
+     "end": 18458,
+     "score": 91.9,
+     "method": "fuzzy"
+    },
+    {
+     "start": 18465,
+     "end": 18668,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "784ce5a983c5f2cc95a2c60ce66f2a8a50f3636f",
+   "paper": "1604.00727",
+   "question": "Do the authors also try the model on other datasets?",
+   "gold": [
+    {
+     "start": 18230,
+     "end": 18699,
+     "score": 90.3,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "7705dd04acedaefee30d8b2c9978537afb2040dc",
+   "paper": "1604.00727",
+   "question": "What word level and character level model baselines are used?",
+   "gold": [
+    {
+     "start": 18230,
+     "end": 18699,
+     "score": 90.3,
+     "method": "fuzzy"
+    },
+    {
+     "start": 17505,
+     "end": 18206,
+     "score": 97.5,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "26327ccebc620a73ba37a95aabe968864e3392b2",
+   "paper": "1604.03114",
+   "question": "what aspects of conversation flow do they look at?",
+   "gold": [
+    {
+     "start": 15026,
+     "end": 15341,
+     "score": 91.3,
+     "method": "fuzzy"
+    },
+    {
+     "start": 1280,
+     "end": 1755,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 3
+  },
+  {
+   "id": "aefa333b2cf0a4000cd40566149816f5b36135e7",
+   "paper": "1604.05372",
+   "question": "What evaluation metric do they use?",
+   "gold": [
+    {
+     "start": 16693,
+     "end": 17429,
+     "score": 99.0,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "a1645d0ba50e4c29f0feb806521093e7b1459081",
+   "paper": "1604.08504",
+   "question": "What is the benchmark dataset and is its quality high?",
+   "gold": [
+    {
+     "start": 10493,
+     "end": 10644,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 11992,
+     "end": 12778,
+     "score": 99.8,
+     "method": "fuzzy"
+    },
+    {
+     "start": 14891,
+     "end": 16465,
+     "score": 98.8,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 3
+  },
+  {
+   "id": "3cd185b7adc835e1c4449eff81222f5fc15c8500",
+   "paper": "1604.08504",
+   "question": "How do they detect spammers?",
+   "gold": [
+    {
+     "start": 8500,
+     "end": 8755,
+     "score": 95.0,
+     "method": "fuzzy"
+    },
+    {
+     "start": 8743,
+     "end": 8963,
+     "score": 99.4,
+     "method": "fuzzy"
+    },
+    {
+     "start": 9809,
+     "end": 10039,
+     "score": 98.9,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 4
+  },
+  {
+   "id": "b85fc420eb2f77f6f14f375cc1fcc5155eb5c0a8",
+   "paper": "1605.03481",
+   "question": "Does the paper clearly establish that the challenges listed here exist in this dataset and task?",
+   "gold": [
+    {
+     "start": 2949,
+     "end": 4031,
+     "score": 96.7,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "127d5ddfabec5c58832e5865cbd8ed0978c25a13",
+   "paper": "1605.03481",
+   "question": "What is the word-level baseline?",
+   "gold": [
+    {
+     "start": 10633,
+     "end": 11203,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "a6d37b5975050da0b1959232ae756fc09e5f87e8",
+   "paper": "1605.03481",
+   "question": "what is the word level baseline they compare to?",
+   "gold": [
+    {
+     "start": 10633,
+     "end": 11203,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "7561a968470a8936d10e1ba722d2f38b5a9a4d38",
+   "paper": "1605.06083",
+   "question": "What is the size of the dataset?",
+   "gold": [
+    {
+     "start": 1121,
+     "end": 1513,
+     "score": 94.3,
+     "method": "fuzzy"
+    },
+    {
+     "start": 3616,
+     "end": 3987,
+     "score": 95.7,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "6d4400f45bd97b812e946b8a682b018826e841f1",
+   "paper": "1605.06083",
+   "question": "Which methods are considered to find examples of biases and unwarranted inferences??",
+   "gold": [
+    {
+     "start": 13502,
+     "end": 14735,
+     "score": 96.9,
+     "method": "fuzzy"
+    },
+    {
+     "start": 11442,
+     "end": 12361,
+     "score": 99.9,
+     "method": "fuzzy"
+    },
+    {
+     "start": 11179,
+     "end": 11439,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 3
+  },
+  {
+   "id": "26c2e1eb12143d985e4fb50543cf0d1eb4395e67",
+   "paper": "1605.06083",
+   "question": "What biases are found in the dataset?",
+   "gold": [
+    {
+     "start": 11179,
+     "end": 11439,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 12364,
+     "end": 12699,
+     "score": 99.6,
+     "method": "fuzzy"
+    },
+    {
+     "start": 5655,
+     "end": 6145,
+     "score": 95.8,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 4
+  },
+  {
+   "id": "6cd8bad8a031ce6d802ded90f9754088e0c8d653",
+   "paper": "1605.07333",
+   "question": "By how much does their best model outperform the state-of-the-art?",
+   "gold": [
+    {
+     "start": 18117,
+     "end": 18393,
+     "score": 99.5,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "30eacb4595014c9c0e5ee9669103d003cfdfe1e5",
+   "paper": "1605.07333",
+   "question": "Which dataset do they train their models on?",
+   "gold": [
+    {
+     "start": 12138,
+     "end": 12581,
+     "score": 95.3,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "0f7867f888109b9e000ef68965df4dde2511a55f",
+   "paper": "1605.07333",
+   "question": "How does their simple voting scheme work?",
+   "gold": [
+    {
+     "start": 17055,
+     "end": 17723,
+     "score": 97.6,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "e2e977d7222654ee8d983fd8ba63b930e9a5a691",
+   "paper": "1605.07333",
+   "question": "Which variant of the recurrent neural network do they use?",
+   "gold": [
+    {
+     "start": 15226,
+     "end": 15428,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "0cfe0e33fbb100751fc0916001a5a19498ae8cb5",
+   "paper": "1605.07333",
+   "question": "How do they obtain the new context represetation?",
+   "gold": [
+    {
+     "start": 2270,
+     "end": 2587,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 5245,
+     "end": 6997,
+     "score": 99.9,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "642e8cf1d39faa1cd985d16750cdc6696c52db2f",
+   "paper": "1606.02891",
+   "question": "what are the baseline systems?",
+   "gold": [
+    {
+     "start": 2217,
+     "end": 2978,
+     "score": 95.8,
+     "method": "fuzzy"
+    },
+    {
+     "start": 2985,
+     "end": 3187,
+     "score": 99.4,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 3
+  },
+  {
+   "id": "3ddff6b707767c3dd54d7104fe88b628765cae58",
+   "paper": "1606.03676",
+   "question": "which datasets did they experiment with?",
+   "gold": [
+    {
+     "start": 15603,
+     "end": 15896,
+     "score": 93.6,
+     "method": "fuzzy"
+    },
+    {
+     "start": 16201,
+     "end": 16958,
+     "score": 97.7,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "0a5ffe4697913a57fda1fd5a188cd5ed59bdc5c7",
+   "paper": "1606.03676",
+   "question": "which languages are explored?",
+   "gold": [
+    {
+     "start": 16201,
+     "end": 16958,
+     "score": 97.7,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "1dc2da5078a7e5ea82ccd1c90d81999a922bc9bf",
+   "paper": "1608.01884",
+   "question": "Do the authors conduct experiments on the tasks mentioned?",
+   "gold": [
+    {
+     "start": 9041,
+     "end": 9936,
+     "score": 99.7,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "7fa3c2c0cf7f559d43e84076a9113a390c5ba03a",
+   "paper": "1608.01884",
+   "question": "Did they collect their own datasets?",
+   "gold": [
+    {
+     "start": 5702,
+     "end": 6436,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "9a7ba5ed1779c664d2cac92494a43517d3e87c96",
+   "paper": "1608.01884",
+   "question": "What data do they look at?",
+   "gold": [
+    {
+     "start": 7354,
+     "end": 7879,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "662870a90890c620a964720b2ca122a1139410ea",
+   "paper": "1608.01884",
+   "question": "What language do they explore?",
+   "gold": [
+    {
+     "start": 4052,
+     "end": 4629,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 5464,
+     "end": 5699,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 12888,
+     "end": 13946,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 9041,
+     "end": 9936,
+     "score": 99.7,
+     "method": "fuzzy"
+    },
+    {
+     "start": 9940,
+     "end": 10259,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 10291,
+     "end": 11254,
+     "score": 99.7,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 6
+  },
+  {
+   "id": "c2b8ee872b99f698b3d2082d57f9408a91e1b4c1",
+   "paper": "1608.06757",
+   "question": "what is the state of the art?",
+   "gold": [
+    {
+     "start": 21340,
+     "end": 21592,
+     "score": 95.6,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "8eefa116e3c3d3db751423cc4095d1c4153d3a5f",
+   "paper": "1608.06757",
+   "question": "what standard dataset were used?",
+   "gold": [
+    {
+     "start": 18821,
+     "end": 19287,
+     "score": 93.8,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "ecd5770cf8cb12cb34285e26ab834301c17c53e1",
+   "paper": "1608.08188",
+   "question": "What is the model architecture used?",
+   "gold": [
+    {
+     "start": 27939,
+     "end": 28537,
+     "score": 99.2,
+     "method": "fuzzy"
+    },
+    {
+     "start": 27131,
+     "end": 27909,
+     "score": 99.7,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "4a4ce942a7a6efd1fa1d6c91dedf7a89af64b729",
+   "paper": "1608.08188",
+   "question": "How is the data used for training annotated?",
+   "gold": [
+    {
+     "start": 36463,
+     "end": 37639,
+     "score": 99.2,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "b6ae8e10c6a0d34c834f18f66ab730b670fb528c",
+   "paper": "1609.00425",
+   "question": "what are the topics pulled from Reddit?",
+   "gold": [
+    {
+     "start": 4959,
+     "end": 5706,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 20829,
+     "end": 21262,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "88e62ea7a4d1d2921624b8480b5c6b50cfa5ad42",
+   "paper": "1609.00559",
+   "question": "What is a second order co-ocurrence matrix?",
+   "gold": [
+    {
+     "start": 2848,
+     "end": 3642,
+     "score": 91.1,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "4dcf67b5e7bd1422e7e70c657f6eacccd8de06d3",
+   "paper": "1609.00559",
+   "question": "How many humans participated?",
+   "gold": [
+    {
+     "start": 18260,
+     "end": 19030,
+     "score": 92.2,
+     "method": "fuzzy"
+    },
+    {
+     "start": 19047,
+     "end": 19897,
+     "score": 99.4,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "8b3d3953454c88bde88181897a7a2c0c8dd87e23",
+   "paper": "1609.00559",
+   "question": "What embedding techniques are explored in the paper?",
+   "gold": [
+    {
+     "start": 26853,
+     "end": 28126,
+     "score": 97.4,
+     "method": "fuzzy"
+    },
+    {
+     "start": 29234,
+     "end": 30081,
+     "score": 98.7,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 3
+  },
+  {
+   "id": "09c86ef78e567033b725fc56b85c5d2602c1a7c3",
+   "paper": "1610.00956",
+   "question": "How does their ensemble method work?",
+   "gold": [
+    {
+     "start": 40425,
+     "end": 40588,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "d67c01d9b689c052045f3de1b0918bab18c3f174",
+   "paper": "1610.00956",
+   "question": "How large are the improvements of the Attention-Sum Reader model when using the BookTest dataset?",
+   "gold": [
+    {
+     "start": 22291,
+     "end": 22544,
+     "score": 94.2,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "e5bc73974c79d96eee2b688e578a9de1d0eb38fd",
+   "paper": "1610.00956",
+   "question": "How do they show there is space for further improvement?",
+   "gold": [
+    {
+     "start": 27577,
+     "end": 28534,
+     "score": 99.1,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "06eb9f2320451df83e27362c22eb02f4a426a018",
+   "paper": "1610.07809",
+   "question": "what levels of document preprocessing are looked at?",
+   "gold": [
+    {
+     "start": 2041,
+     "end": 2834,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 5338,
+     "end": 5512,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 7488,
+     "end": 8067,
+     "score": 99.8,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 4
+  },
+  {
+   "id": "e54257585cc75564341eb02bdc63ff8111992f82",
+   "paper": "1610.07809",
+   "question": "what keyphrase extraction models were reassessed?",
+   "gold": [
+    {
+     "start": 5338,
+     "end": 5512,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "2a3e36c220e7b47c1b652511a4fdd7238a74a68f",
+   "paper": "1610.07809",
+   "question": "how many articles are in the dataset?",
+   "gold": [
+    {
+     "start": 3872,
+     "end": 4627,
+     "score": 97.9,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "3a6e843c6c81244c14730295cfb8b865cd7ede46",
+   "paper": "1610.08815",
+   "question": "What are the state of the art models?",
+   "gold": [
+    {
+     "start": 31943,
+     "end": 33060,
+     "score": 93.6,
+     "method": "fuzzy"
+    },
+    {
+     "start": 26297,
+     "end": 27731,
+     "score": 95.1,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "fabf6fdcfb4c4c7affaa1e4336658c1e6635b1bf",
+   "paper": "1610.08815",
+   "question": "Which benchmark datasets are used?",
+   "gold": [
+    {
+     "start": 19352,
+     "end": 20101,
+     "score": 96.9,
+     "method": "fuzzy"
+    },
+    {
+     "start": 23488,
+     "end": 23749,
+     "score": 93.3,
+     "method": "fuzzy"
+    },
+    {
+     "start": 24171,
+     "end": 24487,
+     "score": 99.6,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 5
+  },
+  {
+   "id": "3611a72f754de1e256fbd25b012197e1c24e8470",
+   "paper": "1610.09225",
+   "question": "Do they remove seasonality from the time series?",
+   "gold": [
+    {
+     "start": 8665,
+     "end": 9125,
+     "score": 99.5,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "4c07c33dfaf4f3e6db55e377da6fa69825d0ba15",
+   "paper": "1610.09225",
+   "question": "What is the dimension of the embeddings?",
+   "gold": [
+    {
+     "start": 11972,
+     "end": 12730,
+     "score": 99.7,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "b1ce129678e37070e69f01332f1a8587e18e06b0",
+   "paper": "1610.09225",
+   "question": "What dataset is used to train the model?",
+   "gold": [
+    {
+     "start": 7689,
+     "end": 8630,
+     "score": 99.7,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "2f901dab6b757e12763b23ae8b37ae2e517a2271",
+   "paper": "1611.01576",
+   "question": "What languages pairs are used in machine translation?",
+   "gold": [
+    {
+     "start": 22841,
+     "end": 23386,
+     "score": 99.6,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "b591853e938984e6069d738371500ebdec50d256",
+   "paper": "1611.01576",
+   "question": "What sentiment classification dataset is used?",
+   "gold": [
+    {
+     "start": 14964,
+     "end": 15387,
+     "score": 92.0,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "a130306c6662ff489df13fb3f8faa7cba8c52a21",
+   "paper": "1611.01576",
+   "question": "What pooling function is used?",
+   "gold": [
+    {
+     "start": 6668,
+     "end": 7030,
+     "score": 93.6,
+     "method": "fuzzy"
+    },
+    {
+     "start": 7337,
+     "end": 7728,
+     "score": 99.4,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "fa30a938b58fc05131c3854f12efe376cbad887f",
+   "paper": "1611.02988",
+   "question": "What was their performance on emotion detection?",
+   "gold": [
+    {
+     "start": 21137,
+     "end": 21299,
+     "score": 99.3,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "f875337f2ecd686cd7789e111174d0f14972638d",
+   "paper": "1611.02988",
+   "question": "Which existing benchmarks did they compare to?",
+   "gold": [
+    {
+     "start": 7734,
+     "end": 8521,
+     "score": 99.4,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "de53af4eddbc30c808d90b8a11a29217d377569e",
+   "paper": "1611.02988",
+   "question": "Which Facebook pages did they look at?",
+   "gold": [
+    {
+     "start": 5010,
+     "end": 5990,
+     "score": 99.5,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "37a79be0148e1751ffb2daabe4c8ec6680036106",
+   "paper": "1611.03599",
+   "question": "What topic is covered in the Chinese Facebook data? ",
+   "gold": [
+    {
+     "start": 17436,
+     "end": 19022,
+     "score": 95.9,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "518dae6f936882152c162058895db4eca815e649",
+   "paper": "1611.03599",
+   "question": "How many layers does the UTCNN model have?",
+   "gold": [
+    {
+     "start": 12969,
+     "end": 14285,
+     "score": 98.1,
+     "method": "fuzzy"
+    },
+    {
+     "start": 16457,
+     "end": 16706,
+     "score": 98.1,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 3
+  },
+  {
+   "id": "e44a6bf67ce3fde0c6608b150030e44d87eb25e3",
+   "paper": "1611.03599",
+   "question": "What topics are included in the debate data?",
+   "gold": [
+    {
+     "start": 20024,
+     "end": 20686,
+     "score": 99.6,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "6a31db1aca57a818f36bba9002561724655372a7",
+   "paper": "1611.03599",
+   "question": "What is the size of the Chinese data?",
+   "gold": [
+    {
+     "start": 19090,
+     "end": 20019,
+     "score": 99.9,
+     "method": "fuzzy"
+    },
+    {
+     "start": 17436,
+     "end": 19022,
+     "score": 95.9,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "e330e162ec29722f5ec9f83853d129c9e0693d65",
+   "paper": "1611.03599",
+   "question": "Did they collected the two datasets?",
+   "gold": [
+    {
+     "start": 17047,
+     "end": 17432,
+     "score": 99.7,
+     "method": "fuzzy"
+    },
+    {
+     "start": 20024,
+     "end": 20686,
+     "score": 99.6,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "d3093062aebff475b4deab90815004051e802aa6",
+   "paper": "1611.03599",
+   "question": "What are the baselines?",
+   "gold": [
+    {
+     "start": 24142,
+     "end": 25502,
+     "score": 97.7,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "41ac23e32bf208b69414f4b687c4f324c6132464",
+   "paper": "1611.04798",
+   "question": "Which languages do they test on for the under-resourced scenario?",
+   "gold": [
+    {
+     "start": 22232,
+     "end": 23483,
+     "score": 99.8,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "b49598b05358117ab1471b8ebd0b042d2f04b2a4",
+   "paper": "1611.08661",
+   "question": "What neural models are used to encode the text?",
+   "gold": [
+    {
+     "start": 8318,
+     "end": 8417,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 8441,
+     "end": 8617,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 10509,
+     "end": 10891,
+     "score": 94.8,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 4
+  },
+  {
+   "id": "0ee73909ac638903da4a0e5565c8571fc794ab96",
+   "paper": "1612.02482",
+   "question": "How were the human judgements assembled?",
+   "gold": [
+    {
+     "start": 25267,
+     "end": 26502,
+     "score": 99.6,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "f94b53db307685d572aefad52cd55f53d23769c2",
+   "paper": "1612.03226",
+   "question": "How do they calculate variance from the model outputs?",
+   "gold": [
+    {
+     "start": 4972,
+     "end": 5568,
+     "score": 97.9,
+     "method": "fuzzy"
+    },
+    {
+     "start": 6917,
+     "end": 7186,
+     "score": 95.3,
+     "method": "fuzzy"
+    },
+    {
+     "start": 7256,
+     "end": 7733,
+     "score": 99.0,
+     "method": "fuzzy"
+    },
+    {
+     "start": 5935,
+     "end": 6022,
+     "score": 98.7,
+     "method": "fuzzy"
+    },
+    {
+     "start": 6152,
+     "end": 6275,
+     "score": 91.7,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 7
+  },
+  {
+   "id": "aa7d327ef98f9f9847b447d4def04889b4508d7a",
+   "paper": "1612.03226",
+   "question": "How much data samples do they start with before obtaining the initial model labels?",
+   "gold": [
+    {
+     "start": 8460,
+     "end": 8919,
+     "score": 99.2,
+     "method": "fuzzy"
+    },
+    {
+     "start": 4079,
+     "end": 4494,
+     "score": 96.2,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "b8d7d055ddb94f5826a9aad7479b4a92a9c8a2f0",
+   "paper": "1612.03226",
+   "question": "Which model do they use for end-to-end speech recognition?",
+   "gold": [
+    {
+     "start": 7975,
+     "end": 8453,
+     "score": 99.7,
+     "method": "fuzzy"
+    },
+    {
+     "start": 3562,
+     "end": 3981,
+     "score": 94.1,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "551457ed34ca7fc0878c85bc664b135c21059b58",
+   "paper": "1612.03226",
+   "question": "Which dataset do they use?",
+   "gold": [
+    {
+     "start": 8460,
+     "end": 8919,
+     "score": 99.2,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "8d4ac4afbf5b14f412171729ceb5e822afcfa3f4",
+   "paper": "1612.06685",
+   "question": "Do they build a model to automatically detect demographic, lingustic or psycological dimensons of people?",
+   "gold": [
+    {
+     "start": 7396,
+     "end": 8225,
+     "score": 97.2,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "3c93894c4baf49deacc6ed2a14ef5e0f13b7d96f",
+   "paper": "1612.06685",
+   "question": "Which demographic dimensions of people do they obtain?",
+   "gold": [
+    {
+     "start": 2745,
+     "end": 3383,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 5446,
+     "end": 5963,
+     "score": 99.0,
+     "method": "fuzzy"
+    },
+    {
+     "start": 3980,
+     "end": 4220,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 4241,
+     "end": 4869,
+     "score": 99.0,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 4
+  },
+  {
+   "id": "692c9c5d9ff9cd3e0ce8b5e4fa68dda9bd23dec1",
+   "paper": "1612.08205",
+   "question": "How many users do they look at?",
+   "gold": [
+    {
+     "start": 12071,
+     "end": 12302,
+     "score": 98.9,
+     "method": "fuzzy"
+    },
+    {
+     "start": 3220,
+     "end": 3512,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "935d6a6187e6a0c9c0da8e53a42697f853f5c248",
+   "paper": "1612.08205",
+   "question": "What do they mean by a person's industry?",
+   "gold": [
+    {
+     "start": 2158,
+     "end": 2827,
+     "score": 98.5,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "3b77b4defc8a139992bd0b07b5cf718382cb1a5f",
+   "paper": "1612.08205",
+   "question": "What model did they use for their system?",
+   "gold": [
+    {
+     "start": 14289,
+     "end": 14687,
+     "score": 98.5,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "01a41c0a4a7365cd37d28690735114f2ff5229f2",
+   "paper": "1612.08205",
+   "question": "What social media platform did they look at?",
+   "gold": [
+    {
+     "start": 9572,
+     "end": 9789,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "2fbb6322e485e7743ec3fb4bb02d44bf4b5ea8a6",
+   "paper": "1701.02962",
+   "question": "What dataset do they use to evaluate their method?",
+   "gold": [
+    {
+     "start": 21401,
+     "end": 21642,
+     "score": 95.4,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "5260cb56b7d127772425583c5c28958c37cb9bea",
+   "paper": "1701.04056",
+   "question": "How long of dialog history is captured?",
+   "gold": [
+    {
+     "start": 7851,
+     "end": 8696,
+     "score": 99.1,
+     "method": "fuzzy"
+    },
+    {
+     "start": 10811,
+     "end": 11465,
+     "score": 99.8,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "49c32a2a64eb41381e5f12ccea4150cac9f3303d",
+   "paper": "1701.05574",
+   "question": "What other evaluation metrics are looked at?",
+   "gold": [
+    {
+     "start": 30739,
+     "end": 31230,
+     "score": 96.7,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "bbb77f2d6685c9257763ca38afaaef29044b4018",
+   "paper": "1701.05574",
+   "question": "What is the best reported system?",
+   "gold": [
+    {
+     "start": 26963,
+     "end": 27222,
+     "score": 93.8,
+     "method": "fuzzy"
+    },
+    {
+     "start": 30226,
+     "end": 30723,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 30739,
+     "end": 31230,
+     "score": 96.7,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 3
+  },
+  {
+   "id": "00c57e45ac6afbdfa67350a57e81b4fad0ed2885",
+   "paper": "1701.08229",
+   "question": "Do they evaluate only on English datasets?",
+   "gold": [
+    {
+     "start": 3538,
+     "end": 4570,
+     "score": 99.3,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "22714f6cad2d5c54c28823e7285dc85e8d6bc109",
+   "paper": "1701.08229",
+   "question": "What are the three steps to feature elimination?",
+   "gold": [
+    {
+     "start": 8550,
+     "end": 8887,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 8892,
+     "end": 9018,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 9023,
+     "end": 9301,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 9306,
+     "end": 9558,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 4
+  },
+  {
+   "id": "82642d3111287abf736b781043d49536fe48c350",
+   "paper": "1701.08229",
+   "question": "How is the dataset annotated?",
+   "gold": [
+    {
+     "start": 3538,
+     "end": 4570,
+     "score": 99.3,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "5a81732d52f64e81f1f83e8fd3514251227efbc7",
+   "paper": "1701.08229",
+   "question": "What dataset is used for this study?",
+   "gold": [
+    {
+     "start": 3538,
+     "end": 4570,
+     "score": 99.3,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "2a6003a74d051d0ebbe62e8883533a5f5e55078b",
+   "paper": "1702.03342",
+   "question": "which neural embedding model works better?",
+   "gold": [
+    {
+     "start": 51082,
+     "end": 51801,
+     "score": 96.4,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "1b1b0c71f1a4b37c6562d444f75c92eb2c727d9b",
+   "paper": "1702.03342",
+   "question": "What is the degree of dimension reduction of the efficient aggregation method?",
+   "gold": [
+    {
+     "start": 53309,
+     "end": 53533,
+     "score": 93.0,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "53aa07cc4cc4e7107789ae637dbda8c9f6c1e6aa",
+   "paper": "1702.03856",
+   "question": "what challenges are identified?",
+   "gold": [
+    {
+     "start": 9099,
+     "end": 9376,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 9419,
+     "end": 9742,
+     "score": 99.2,
+     "method": "fuzzy"
+    },
+    {
+     "start": 11836,
+     "end": 12288,
+     "score": 99.7,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 9
+  },
+  {
+   "id": "72755c2d79210857cfff60bfbcb55f83c71ada51",
+   "paper": "1702.03856",
+   "question": "what is the size of the speech corpus?",
+   "gold": [
+    {
+     "start": 7273,
+     "end": 7979,
+     "score": 99.8,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "4e1a67f8dc68b55a5ce18e6cd385ae9ab90d891f",
+   "paper": "1703.04001",
+   "question": "Does the experiments focus on a specific domain?",
+   "gold": [
+    {
+     "start": 5212,
+     "end": 5991,
+     "score": 95.4,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "8060a773f6a136944f7b59758d08cc6f2a59693b",
+   "paper": "1703.07090",
+   "question": "how small of a dataset did they train on?",
+   "gold": [
+    {
+     "start": 6386,
+     "end": 7427,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 20005,
+     "end": 20351,
+     "score": 99.6,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "1bb7eb5c3d029d95d1abf9f2892c1ec7b6eef306",
+   "paper": "1703.07090",
+   "question": "what was their character error rate?",
+   "gold": [
+    {
+     "start": 25037,
+     "end": 25295,
+     "score": 93.5,
+     "method": "fuzzy"
+    },
+    {
+     "start": 27764,
+     "end": 27966,
+     "score": 93.6,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 3
+  },
+  {
+   "id": "c0af8b7bf52dc15e0b33704822c4a34077e09cd1",
+   "paper": "1703.07090",
+   "question": "which lstm models did they compare with?",
+   "gold": [
+    {
+     "start": 15938,
+     "end": 16378,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 25037,
+     "end": 25295,
+     "score": 93.5,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 3
+  },
+  {
+   "id": "01e2d10178347d177519f792f86f25575106ddc7",
+   "paper": "1703.07476",
+   "question": "What datasets are used to assess the performance of the system?",
+   "gold": [
+    {
+     "start": 13363,
+     "end": 14439,
+     "score": 99.4,
+     "method": "fuzzy"
+    },
+    {
+     "start": 20534,
+     "end": 22594,
+     "score": 99.7,
+     "method": "fuzzy"
+    },
+    {
+     "start": 23196,
+     "end": 23875,
+     "score": 99.6,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 3
+  },
+  {
+   "id": "021bfb7e180d67112b74f05ecb3fa13acc036c86",
+   "paper": "1703.07476",
+   "question": "How is the vocabulary of word-like or phoneme-like units automatically discovered?",
+   "gold": [
+    {
+     "start": 6595,
+     "end": 6982,
+     "score": 96.4,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "77c34f1033702278f7f044806c1eba0c6ecb8b04",
+   "paper": "1703.10344",
+   "question": "Do they report results only on English data?",
+   "gold": [
+    {
+     "start": 8737,
+     "end": 9220,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 37422,
+     "end": 37656,
+     "score": 99.5,
+     "method": "fuzzy"
+    },
+    {
+     "start": 37665,
+     "end": 38025,
+     "score": 97.9,
+     "method": "fuzzy"
+    },
+    {
+     "start": 38651,
+     "end": 39073,
+     "score": 96.2,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 7
+  },
+  {
+   "id": "2ee715c7c6289669f11a79743a6b2b696073805d",
+   "paper": "1703.10344",
+   "question": "What baseline model is used?",
+   "gold": [
+    {
+     "start": 41860,
+     "end": 42131,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 42226,
+     "end": 42308,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 42317,
+     "end": 42422,
+     "score": 96.2,
+     "method": "fuzzy"
+    },
+    {
+     "start": 47938,
+     "end": 48262,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 48288,
+     "end": 48442,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 48447,
+     "end": 48523,
+     "score": 95.2,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 8
+  },
+  {
+   "id": "61a9ea36ddc37c60d1a51dabcfff9445a2225725",
+   "paper": "1703.10344",
+   "question": "What news article sources are used?",
+   "gold": [
+    {
+     "start": 8737,
+     "end": 9220,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "cc850bc8245a7ae790e1f59014371d4f35cd46d7",
+   "paper": "1703.10344",
+   "question": "How do they determine the exact section to use the input article?",
+   "gold": [
+    {
+     "start": 27531,
+     "end": 28371,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 39789,
+     "end": 40151,
+     "score": 96.2,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "984fc3e726848f8f13dfe72b89e3770d00c3a1af",
+   "paper": "1703.10344",
+   "question": "What features are used to represent the novelty of news articles to entity pages?",
+   "gold": [
+    {
+     "start": 26420,
+     "end": 26781,
+     "score": 96.6,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "fb1227b3681c69f60eb0539e16c5a8cd784177a7",
+   "paper": "1703.10344",
+   "question": "What features are used to represent the salience and relative authority of entities?",
+   "gold": [
+    {
+     "start": 21400,
+     "end": 21788,
+     "score": 99.0,
+     "method": "fuzzy"
+    },
+    {
+     "start": 21791,
+     "end": 22863,
+     "score": 99.3,
+     "method": "fuzzy"
+    },
+    {
+     "start": 24341,
+     "end": 24839,
+     "score": 93.8,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 3
+  },
+  {
+   "id": "8e44c02c2d9fa56fb74ace35ee70a5add50b52ae",
+   "paper": "1704.04452",
+   "question": "Does the corpus contain only English documents?",
+   "gold": [
+    {
+     "start": 4205,
+     "end": 4737,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 4090,
+     "end": 4209,
+     "score": 90.2,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "1522ccedbb1f668958f24cca070f640274bc2549",
+   "paper": "1704.04452",
+   "question": "What type of evaluation is proposed for this task?",
+   "gold": [
+    {
+     "start": 31327,
+     "end": 31466,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "97466a37525536086ed5d6e5ed143df085682318",
+   "paper": "1704.04452",
+   "question": "What baseline system is proposed?",
+   "gold": [
+    {
+     "start": 31327,
+     "end": 31466,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "e9cfbfdf30e48cffdeca58d4ac6fdd66a8b27d7a",
+   "paper": "1704.04452",
+   "question": "How were crowd workers instructed to identify important elements in large document collections?",
+   "gold": [
+    {
+     "start": 11476,
+     "end": 12057,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "d6191c4643201262a770947fc95a613f57bedb6b",
+   "paper": "1704.04452",
+   "question": "Which collections of web documents are included in the corpus?",
+   "gold": [
+    {
+     "start": 18184,
+     "end": 18554,
+     "score": 94.5,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "9ee07edc371e014df686ced4fb0c3a7b9ce3d5dc",
+   "paper": "1704.06194",
+   "question": "On which benchmarks they achieve the state of the art?",
+   "gold": [
+    {
+     "start": 38389,
+     "end": 38808,
+     "score": 90.1,
+     "method": "fuzzy"
+    },
+    {
+     "start": 37802,
+     "end": 38012,
+     "score": 94.6,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 3
+  },
+  {
+   "id": "d3aa0449708cc861a51551b128d73e11d62207d2",
+   "paper": "1704.06194",
+   "question": "What they use in their propsoed framework?",
+   "gold": [
+    {
+     "start": 5837,
+     "end": 6871,
+     "score": 97.0,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "c0e341c4d2253eb42c8840381b082aae274eddad",
+   "paper": "1704.06194",
+   "question": "What is te core component for KBQA?",
+   "gold": [
+    {
+     "start": 7048,
+     "end": 7382,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "cc608df2884e1e82679f663ed9d9d67a4b6c03f3",
+   "paper": "1705.01214",
+   "question": "What evaluation metrics did look at?",
+   "gold": [
+    {
+     "start": 83620,
+     "end": 84598,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "3e432d71512ffbd790a482c716e7079ee78ce732",
+   "paper": "1705.01214",
+   "question": "What datasets are used?",
+   "gold": [
+    {
+     "start": 75080,
+     "end": 75739,
+     "score": 99.6,
+     "method": "fuzzy"
+    },
+    {
+     "start": 76232,
+     "end": 76409,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "dd76130ec5fac477123fe8880472d03fbafddef6",
+   "paper": "1705.01214",
+   "question": "What is the state of the art described in the paper?",
+   "gold": [
+    {
+     "start": 13838,
+     "end": 14079,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 14082,
+     "end": 14678,
+     "score": 99.4,
+     "method": "fuzzy"
+    },
+    {
+     "start": 14684,
+     "end": 15268,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 15271,
+     "end": 15713,
+     "score": 98.9,
+     "method": "fuzzy"
+    },
+    {
+     "start": 15720,
+     "end": 16136,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 5
+  },
+  {
+   "id": "12159f04e0427fe33fa05af6ba8c950f1a5ce5ea",
+   "paper": "1705.01265",
+   "question": "Which hyperparameters were varied in the experiments on the four tasks?",
+   "gold": [
+    {
+     "start": 10813,
+     "end": 11113,
+     "score": 94.6,
+     "method": "fuzzy"
+    },
+    {
+     "start": 11627,
+     "end": 11788,
+     "score": 90.0,
+     "method": "fuzzy"
+    },
+    {
+     "start": 20429,
+     "end": 20672,
+     "score": 93.3,
+     "method": "fuzzy"
+    },
+    {
+     "start": 8950,
+     "end": 9230,
+     "score": 99.1,
+     "method": "fuzzy"
+    },
+    {
+     "start": 15719,
+     "end": 16596,
+     "score": 95.9,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 7
+  },
+  {
+   "id": "a4a1fcef760b133e9aa876ac28145ad98a609927",
+   "paper": "1705.01265",
+   "question": "Which other hyperparameters, other than number of clusters are typically evaluated in this type of research?",
+   "gold": [
+    {
+     "start": 2457,
+     "end": 3049,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "ef396a34436072cb3c40b0c9bc9179fee4a168ae",
+   "paper": "1705.04153",
+   "question": "What tasks do they experiment with?",
+   "gold": [
+    {
+     "start": 5436,
+     "end": 5827,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "cf874cd9023d901e10aa8664b813d32501e7e4d2",
+   "paper": "1705.05437",
+   "question": "What is NER?",
+   "gold": [
+    {
+     "start": 2337,
+     "end": 2712,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "42084c41343e5a6ae58a22e5bfc5ce987b5173de",
+   "paper": "1705.05437",
+   "question": "Does the paper explore extraction from electronic health records?",
+   "gold": [
+    {
+     "start": 3645,
+     "end": 4496,
+     "score": 95.9,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "03e9ac1a2d90152cd041342a11293a1ebd33bcc3",
+   "paper": "1706.00139",
+   "question": "Does the model evaluated on NLG datasets or dialog datasets?",
+   "gold": [
+    {
+     "start": 17098,
+     "end": 17663,
+     "score": 94.6,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "e8f969ffd637b82d04d3be28c51f0f3ca6b3883e",
+   "paper": "1706.01678",
+   "question": "Which evaluation methods are used?",
+   "gold": [
+    {
+     "start": 17701,
+     "end": 18422,
+     "score": 99.0,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "46227b4265f1d300a5ed71bf40822829de662bc2",
+   "paper": "1706.01678",
+   "question": "What dataset is used in this paper?",
+   "gold": [
+    {
+     "start": 7403,
+     "end": 7891,
+     "score": 91.2,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "a6a48de63c1928238b37c2a01c924b852fe752f8",
+   "paper": "1706.01678",
+   "question": "Which other methods do they compare with?",
+   "gold": [
+    {
+     "start": 17394,
+     "end": 17645,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 18973,
+     "end": 19690,
+     "score": 96.1,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 3
+  },
+  {
+   "id": "b65a83a24fc66728451bb063cf6ec50134c8bfb0",
+   "paper": "1706.01678",
+   "question": "How are sentences selected from the summary graph?",
+   "gold": [
+    {
+     "start": 9996,
+     "end": 10330,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 12721,
+     "end": 13663,
+     "score": 94.9,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "bdf93053b1b9b0a21f77ed370cf4d5a10df70e3e",
+   "paper": "1706.01875",
+   "question": "What was their system's performance?",
+   "gold": [
+    {
+     "start": 13581,
+     "end": 14022,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "5a6926de13a8cc25ce687c22741ba97a6e63d4ee",
+   "paper": "1706.01875",
+   "question": "What other political events are included in the database?",
+   "gold": [
+    {
+     "start": 16178,
+     "end": 17100,
+     "score": 97.1,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "dcc1115aeaf87118736e86f3e3eb85bf5541281c",
+   "paper": "1706.01875",
+   "question": "What classifier did they use?",
+   "gold": [
+    {
+     "start": 8216,
+     "end": 8425,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "9ca447c8959a693a3f7bdd0a2c516f4b86f95718",
+   "paper": "1706.06894",
+   "question": "How were the tweets annotated?",
+   "gold": [
+    {
+     "start": 7255,
+     "end": 7828,
+     "score": 99.8,
+     "method": "fuzzy"
+    },
+    {
+     "start": 7831,
+     "end": 8542,
+     "score": 99.8,
+     "method": "fuzzy"
+    },
+    {
+     "start": 8545,
+     "end": 9051,
+     "score": 99.8,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 3
+  },
+  {
+   "id": "05887a8466e0a2f0df4d6a5ffc5815acd7d9066a",
+   "paper": "1706.06894",
+   "question": "Which SVM approach resulted in the best performance?",
+   "gold": [
+    {
+     "start": 11744,
+     "end": 13609,
+     "score": 94.9,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "c87fcc98625e82fdb494ff0f5309319620d69040",
+   "paper": "1706.06894",
+   "question": "What are hashtag features?",
+   "gold": [
+    {
+     "start": 14337,
+     "end": 14654,
+     "score": 99.6,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "500a8ec1c56502529d6e59ba6424331f797f31f0",
+   "paper": "1706.06894",
+   "question": "How many tweets did they collect?",
+   "gold": [
+    {
+     "start": 9050,
+     "end": 9804,
+     "score": 99.5,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "ff6c9af28f0e2bb4fb6a69f124665f8ceb966fbc",
+   "paper": "1706.06894",
+   "question": "Which sports clubs are the targets?",
+   "gold": [
+    {
+     "start": 7255,
+     "end": 7828,
+     "score": 99.8,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "8ce11515634236165cdb06ba80b9a36a8b9099a2",
+   "paper": "1706.08198",
+   "question": "Is pre-training effective in their evaluation?",
+   "gold": [
+    {
+     "start": 18373,
+     "end": 19101,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 4279,
+     "end": 4651,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "6024039bbd1118c5dab86c41cce1175d99f10a25",
+   "paper": "1706.08198",
+   "question": "What parallel corpus did they use?",
+   "gold": [
+    {
+     "start": 13554,
+     "end": 14102,
+     "score": 93.4,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "eda4869c67fe8bbf83db632275f053e7e0241e8c",
+   "paper": "1706.09673",
+   "question": "Which dataset do they use?",
+   "gold": [
+    {
+     "start": 9106,
+     "end": 9443,
+     "score": 92.8,
+     "method": "fuzzy"
+    },
+    {
+     "start": 7537,
+     "end": 9036,
+     "score": 95.8,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "ecc63972b2783ee39b3e522653cfb6dc5917d522",
+   "paper": "1706.09673",
+   "question": "How do they encourage understanding of literature as part of their objective function?",
+   "gold": [
+    {
+     "start": 2192,
+     "end": 2763,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "37edc25e39515ffc2d92115d2fcd9e6ceb18898b",
+   "paper": "1707.03569",
+   "question": "What was the baseline?",
+   "gold": [
+    {
+     "start": 18173,
+     "end": 18695,
+     "score": 95.9,
+     "method": "fuzzy"
+    },
+    {
+     "start": 14938,
+     "end": 15762,
+     "score": 94.4,
+     "method": "fuzzy"
+    },
+    {
+     "start": 16538,
+     "end": 17607,
+     "score": 95.8,
+     "method": "fuzzy"
+    },
+    {
+     "start": 21162,
+     "end": 21350,
+     "score": 91.1,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 4
+  },
+  {
+   "id": "e431661f17347607c3d3d9764928385a8f3d9650",
+   "paper": "1707.03569",
+   "question": "By how much did they improve?",
+   "gold": [
+    {
+     "start": 7453,
+     "end": 8629,
+     "score": 90.2,
+     "method": "fuzzy"
+    },
+    {
+     "start": 14938,
+     "end": 15762,
+     "score": 94.4,
+     "method": "fuzzy"
+    },
+    {
+     "start": 18173,
+     "end": 18695,
+     "score": 95.9,
+     "method": "fuzzy"
+    },
+    {
+     "start": 21162,
+     "end": 21350,
+     "score": 91.1,
+     "method": "fuzzy"
+    },
+    {
+     "start": 13965,
+     "end": 14142,
+     "score": 90.8,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 5
+  },
+  {
+   "id": "7b4992e2d26577246a16ac0d1efc995ab4695d24",
+   "paper": "1707.05236",
+   "question": "What was the baseline used?",
+   "gold": [
+    {
+     "start": 11309,
+     "end": 11906,
+     "score": 94.8,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "ab9b0bde6113ffef8eb1c39919d21e5913a05081",
+   "paper": "1707.05236",
+   "question": "What are their results on both datasets?",
+   "gold": [
+    {
+     "start": 11309,
+     "end": 11906,
+     "score": 94.8,
+     "method": "fuzzy"
+    },
+    {
+     "start": 11954,
+     "end": 12789,
+     "score": 99.0,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 3
+  },
+  {
+   "id": "9a9d225f9ac35ed35ea02f554f6056af3b42471d",
+   "paper": "1707.05236",
+   "question": "What textual patterns are extracted?",
+   "gold": [
+    {
+     "start": 7600,
+     "end": 7754,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 7797,
+     "end": 8673,
+     "score": 97.7,
+     "method": "fuzzy"
+    },
+    {
+     "start": 6787,
+     "end": 7183,
+     "score": 97.8,
+     "method": "fuzzy"
+    },
+    {
+     "start": 7189,
+     "end": 7597,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 5
+  },
+  {
+   "id": "ea56148a8356a1918bedcf0a99ae667c27792cfe",
+   "paper": "1707.05236",
+   "question": "Which annotated corpus did they use?",
+   "gold": [
+    {
+     "start": 10777,
+     "end": 11301,
+     "score": 97.4,
+     "method": "fuzzy"
+    },
+    {
+     "start": 10056,
+     "end": 10767,
+     "score": 92.2,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "cd32a38e0f33b137ab590e1677e8fb073724df7f",
+   "paper": "1707.05236",
+   "question": "Which languages are explored in this paper?",
+   "gold": [
+    {
+     "start": 10056,
+     "end": 10767,
+     "score": 92.2,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "ed67359889cf61fa11ee291d6c378cccf83d599d",
+   "paper": "1707.06806",
+   "question": "Which pretrained word vectors did they use?",
+   "gold": [
+    {
+     "start": 7697,
+     "end": 8090,
+     "score": 97.7,
+     "method": "fuzzy"
+    },
+    {
+     "start": 15335,
+     "end": 15736,
+     "score": 99.1,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "425bd2ccfd95ead91d8f2b1b1c8ab9fc3446cb82",
+   "paper": "1707.06806",
+   "question": "What evaluation metrics are used?",
+   "gold": [
+    {
+     "start": 12460,
+     "end": 12796,
+     "score": 98.9,
+     "method": "fuzzy"
+    },
+    {
+     "start": 2439,
+     "end": 3186,
+     "score": 99.5,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "955de9f7412ba98a0c91998919fa048d339b1d48",
+   "paper": "1707.06806",
+   "question": "Which shallow approaches did they experiment with?",
+   "gold": [
+    {
+     "start": 14384,
+     "end": 14632,
+     "score": 98.5,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "3b371ea554fa6639c76a364060258454e4b931d4",
+   "paper": "1707.06806",
+   "question": "Where do they obtain the news videos from?",
+   "gold": [
+    {
+     "start": 12815,
+     "end": 13024,
+     "score": 98.8,
+     "method": "fuzzy"
+    },
+    {
+     "start": 13053,
+     "end": 13574,
+     "score": 99.8,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "ddb23a71113cbc092cbc158066d891cae261e2c6",
+   "paper": "1707.06806",
+   "question": "What is the source of the news articles?",
+   "gold": [
+    {
+     "start": 13609,
+     "end": 14321,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 12815,
+     "end": 13024,
+     "score": 98.8,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  },
+  {
+   "id": "113d791df6fcfc9cecfb7b1bebaf32cc2e4402ab",
+   "paper": "1708.01464",
+   "question": "how is model compactness measured?",
+   "gold": [
+    {
+     "start": 19666,
+     "end": 19846,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "0752d71a0a1f73b3482a888313622ce9e9870d6e",
+   "paper": "1708.01464",
+   "question": "what was the baseline?",
+   "gold": [
+    {
+     "start": 15944,
+     "end": 16124,
+     "score": 93.8,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 1
+  },
+  {
+   "id": "55c8f7acbfd4f5cde634aaecd775b3bb32e9ffa3",
+   "paper": "1708.01464",
+   "question": "what evaluation metrics were used?",
+   "gold": [
+    {
+     "start": 14641,
+     "end": 14837,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 14842,
+     "end": 14992,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 14997,
+     "end": 15144,
+     "score": 100.0,
+     "method": "exact"
+    },
+    {
+     "start": 15147,
+     "end": 15278,
+     "score": 100.0,
+     "method": "exact"
+    }
+   ],
+   "n_evidence": 5
+  },
+  {
+   "id": "4eaf9787f51cd7cdc45eb85cf223d752328c6ee4",
+   "paper": "1708.01464",
+   "question": "what datasets did they use?",
+   "gold": [
+    {
+     "start": 12206,
+     "end": 13836,
+     "score": 98.2,
+     "method": "fuzzy"
+    }
+   ],
+   "n_evidence": 2
+  }
+ ]
+}

@@ -1,0 +1,360 @@
+CITEGUARD - SYSTEM DESIGN
+========================
+
+Describes the code on branch chore/resume-ready (Nov 2026). Everything under "1" to "10" is what the code
+does today. Section 11 is what it does NOT do. Section 12 is how it would scale (design only, not built).
+
+
+------------------------------------------------------------------------------------------------------------
+0. WHAT THE PROJECT DOES (in plain words)
+------------------------------------------------------------------------------------------------------------
+
+You ask a research question, e.g. "What efficiency records have perovskite-silicon tandem solar cells reached?"
+
+CiteGuard:
+  1. splits it into 4-8 sub-questions (LLM),
+  2. searches the web for each one and saves a frozen copy ("snapshot") of every page it reads,
+  3. picks the 4 most relevant passages per sub-question (vector search),
+  4. has an LLM write short factual claims, each pointing at exact sentences in a snapshot,
+  5. checks every claim twice (a strict code check, then a second LLM from a different model family),
+  6. throws away every claim it can't trace to its source, and
+  7. writes a Markdown report: kept claims with their quotes, and an audit trail of what was dropped and why.
+
+The point: the report can only contain claims that are attributed to a span of a page it actually fetched.
+"Verified" means "attributed to a source", NOT "true". If the page is wrong, CiteGuard cites the wrong page.
+
+It also enforces a hard token budget per job and records every LLM call (tokens, modeled cost, latency) in
+a ledger table.
+
+
+------------------------------------------------------------------------------------------------------------
+1. HIGH-LEVEL ARCHITECTURE
+------------------------------------------------------------------------------------------------------------
+
+   Client (curl / UI)              MCP client (Claude Desktop, IDE)
+          |                                   |
+          v                                   v
+  +-------------------+              +-------------------+
+  | FastAPI app.main  |              | app/mcp/server.py |
+  | POST /research    |              | research,         |
+  | GET  /jobs/...    |              | verify_quote      |
+  +---------+---------+              +---------+---------+
+            | BackgroundTasks (same process)   |
+            v                                  v
+  +--------------------------------------------------------+
+  | app/pipeline.py  execute_research_job(job_id)          |
+  |   -> LangGraph StateGraph (app/research/graph.py)      |
+  |      checkpointer: MemorySaver (in memory)             |
+  +---------------------------+----------------------------+
+                              |
+     +------------------------+------------------------------+
+     |                        |                              |
+     v                        v                              v
+ +----------------+  +--------------------------+  +------------------------+
+ | Search         |  | Fetcher (SSRF-hardened)  |  | Embeddings             |
+ | Tavily -> Brave|  | httpx + trafilatura      |  | bge-small (384-d),     |
+ | -> no sources  |  | snapshot + SHA-256       |  | local, CPU             |
+ +----------------+  +--------------------------+  +------------------------+
+                              |
+                              v
+ +-----------------------------------------------------------------+
+ | call_llm  (app/core/llm.py) - the ONLY way to reach an LLM      |
+ | cache -> budget check -> rate limiter -> reserve ledger row ->  |
+ | provider (Groq, fallbacks, circuit breaker) -> schema check ->  |
+ | reconcile ledger row with provider-reported tokens              |
+ +-----------------------------+-----------------------------------+
+                               |
+                               v
+ +-----------------------------------------------------------------+
+ | PostgreSQL 16 + pgvector                                        |
+ | jobs, subquestions, sources, chunks(vector 384), claims,        |
+ | conflicts, ledger, verifier_testset      (Alembic migrations)   |
+ +-----------------------------------------------------------------+
+
+Models (Groq):
+  planner + writer + rewriter : openai/gpt-oss-120b
+  verifier (Stage 2)          : qwen/qwen3.8-27b    (different family from the writer on purpose,
+                                                     so the checker doesn't share the writer's blind spots)
+
+
+------------------------------------------------------------------------------------------------------------
+2. REQUEST LIFECYCLE
+------------------------------------------------------------------------------------------------------------
+
+  POST /research {question, max_tokens, max_minutes, mode}
+    - validated: question <= 2000 chars, max_tokens 1,000..500,000, max_minutes 1..60,
+      mode in {"standard", "shadow"}
+    - inserts a Job row (status=queued), returns 202 {job_id}
+    - schedules execute_research_job(job_id) as a FastAPI BackgroundTask
+
+  execute_research_job
+    - sets deadline_at = now + max_minutes, status=running
+    - runs the graph with thread_id = job_id
+    - on any exception: status=failed, report says only the exception TYPE (no message text, so no page
+      content or secrets leak into the report); full traceback goes to the server log
+
+  Client polls:
+    GET /jobs/{id}          status, stage, claim counts, tokens, modeled cost
+    GET /jobs/{id}/report   Markdown report
+    GET /jobs/{id}/claims   every claim with verdict and drop reason
+    GET /jobs/{id}/ledger   every LLM call
+    POST /jobs/{id}/cancel  only changes queued/running jobs
+  Admin only (X-API-Key compared with hmac.compare_digest; 403 if ADMIN_API_KEY is unset = fail closed):
+    GET  /export/claims.csv  (cells starting with = + - @ tab CR are prefixed with ' : CSV formula injection)
+    POST /labels             (bad CSV -> 400)
+
+
+------------------------------------------------------------------------------------------------------------
+3. THE GRAPH (app/research/graph.py, app/research/nodes.py)
+------------------------------------------------------------------------------------------------------------
+
+  START -> plan --[budget/cancel?]--> research --[budget/cancel?]--> write --[budget/cancel?]--> verify
+                \______________________\______________________________\--> render (partial report)
+
+  verify --(any claim "partial" and not yet rewritten)--> rewrite --> verify      (at most 1 rewrite per claim)
+  verify --(otherwise)--> analyze --> render --> END
+
+  Edge guard check_budget_or_cancelled (after plan, research, write):
+    job cancelled            -> render
+    ledger spend >= max_tokens -> status=partial, render
+  So a job over budget still produces a report of what it has, instead of failing.
+
+  Node by node:
+
+  plan      generate_plan: 1 LLM call (phase "planning", max 600 output tokens), Pydantic schema forces
+            4..8 sub-questions. Re-uses existing sub-questions if the node runs again.
+
+  research  For each sub-question (sequential):
+              search_web(top_n=2): Tavily, else Brave, else [] (no invented sources)
+              fetch_url_snapshot per URL (section 6)
+              dedupe Source on UNIQUE(job_id, content_hash)
+              chunk_spans(350 words, overlap 50) -> chunks stored with start_char/end_char offsets
+              embed_texts (bge-small, normalized) -> chunks.embedding vector(384)
+            One failed fetch is skipped; it never fails the job. Sub-questions already "done" are skipped.
+
+  write     For each researched sub-question:
+              embed the sub-question, then
+              SELECT ... ORDER BY embedding <=> query_vector LIMIT 4      (pgvector cosine distance)
+              sentence-split each chunk and show it to the writer as numbered sentences inside
+              <evidence_data chunk_id=.. source_id=..> tags (marked untrusted)
+              writer returns JSON: [{claim, chunk_id, first_sentence, last_sentence}]   (1..4 claims)
+              resolve_citation turns that into snapshot offsets and COPIES the quote out of the snapshot
+              in code. Invalid chunk_id / sentence index -> claim stored as dropped (invalid_citation_ref).
+            Budget/provider failure on one sub-question -> skip it, keep the rest.
+
+  verify    For every pending claim: verify_claim (section 4). Updates quote_found, entailment, reason,
+            final_status. Mode "shadow": Stage 1 drops are enforced, Stage 2 verdicts are only recorded in
+            shadow_verdict (for measuring the LLM judge without letting it decide).
+
+  rewrite   For "partial" claims: rewrite_claim gets the SNAPSHOT span (never the writer text) and the
+            verifier's critique, returns a narrower claim, which goes back to verify. No offsets -> drop.
+            Any failure (invalid JSON, provider down, budget) -> None -> claim dropped (fail closed).
+
+  analyze   No LLM. Confidence per kept claim: high if its sub-question has kept claims from >= 2 domains,
+            medium if verdict "supports", else low. Conflicts: pairs of kept claims from different domains with
+            token_set_ratio >= 45 and an opposing keyword pair (increase/decrease, safe/harmful, ...).
+            This is a heuristic, not a contradiction model.
+
+  render    Sets the final status (done unless partial/cancelled) and writes the 7-section report:
+            kept claims with quotes and source URLs, per sub-question status ("no claims drafted" vs
+            "drafted but none passed verification"), conflicts, coverage gaps, dropped claims with reason
+            codes, and the token/cost audit.
+
+
+------------------------------------------------------------------------------------------------------------
+4. THE VERIFIER (app/core/verifier.py) - the core idea
+------------------------------------------------------------------------------------------------------------
+
+  Problem it solves: LLMs "cite" sources with quotes that are slightly wrong, or attach a correct quote to
+  a claim that says more than the quote does.
+
+  Step 0  Citation by reference.
+          The writer never writes a quote. It points at (chunk, sentence range); code copies the span from
+          the stored snapshot. A misquote is therefore impossible by construction. The claim text can
+          still be wrong, which is what Stages 1 and 2 check.
+
+  Stage 1 Deterministic, 0 tokens.
+          - offsets must be valid for the snapshot          else drop: invalid_citation_ref
+          - (legacy/MCP path without offsets) NFKC-normalize, exact substring, else RapidFuzz
+            partial_ratio >= 95 for quotes >= 40 chars      else drop: quote_not_found
+          - fact-token check: every number ("33.9%", "2,000"), date and capitalized entity in the claim must
+            appear in the span                               else drop: fact_token_mismatch
+            Example: span says 33.9%, claim says 43.9% -> dropped before any LLM is called.
+            After a fuzzy match the quote's own fact tokens are checked too, so a fuzzy match can't
+            smuggle in a changed digit.
+
+  Stage 2 LLM entailment (different model family).
+          Input: claim + snapshot span + 400 chars of context on each side. Never the writer's quote.
+          The span is wrapped in a delimiter = "DATA-" + HMAC-SHA256(secret key, content)[:24]. Page text
+          cannot forge the END marker because it doesn't know the key. (This stops delimiter spoofing,
+          NOT every injection that stays inside the block - stated honestly in the code.)
+          Output must match {verdict: supports|partial|unsupported, reason}. Invalid JSON -> one corrective
+          retry -> still invalid -> drop.
+
+  Decision:
+          supports    -> kept
+          partial     -> rewrite once, then verify again
+          unsupported -> dropped
+
+  Fail closed: every error path drops the claim with a reason code:
+          verifier_invalid_output, provider_unavailable, budget_exceeded, verifier_unconfigured (HMAC key
+          missing). There is no path where an error lets a claim through.
+
+
+------------------------------------------------------------------------------------------------------------
+5. THE LLM GATEWAY call_llm (app/core/llm.py)
+------------------------------------------------------------------------------------------------------------
+
+  Every LLM call in the codebase goes through this one function (a unit test fails the build if any module
+  imports a LangChain chat model, because those would bypass the budget).
+
+  1. Cache       key = SHA-256(model, messages, schema, max_tokens), stored as files on local disk.
+                 Hit -> ledger row with cache_hit=true, 0 tokens, 0 cost.
+  2. Budget pre-check (advisory, no lock): estimate = chars/4 of the prompt + max_tokens.
+                 Job cap      : total spend + estimate <= job.max_tokens
+                 Phase caps   : share of the job budget per phase
+                                planning 10%, writing 60%, verifying 35%, research 50%, reserve 10%
+                                (caps, not a partition; sized from the measured split over 22 real jobs:
+                                 writing 63.7%, verifying 32.4%, planning 3.9%)
+                 Unknown scope -> ValueError (fail closed; no silent bypass).
+  3. Rate limiter: sliding 60-second window, 8,000 tokens/minute (Groq free tier). Waits if needed; raises
+                 if the wait would pass the job deadline. In-process.
+  4. Reservation (binding check): SELECT job ... FOR UPDATE, re-check caps counting other in-flight
+                 reservations, INSERT ledger row status='reserved', COMMIT (releases the lock).
+                 -> two concurrent calls can't both spend the same headroom.
+  5. Provider call with failover: Groq primary, then fallbacks from CITEGUARD_FALLBACKS (OpenAI-compatible
+                 endpoints). Per-provider circuit breaker: opens after 3 consecutive failures, half-opens after
+                 30 s. 60 s timeout. All open/failed -> ProviderUnavailableError.
+  6. Schema validation (Pydantic). Invalid -> one retry with a generic correction message (never echoes page
+                 content back into the prompt) -> still invalid -> ValidationError to the caller.
+  7. Reconcile: the reserved row is overwritten with PROVIDER-REPORTED tokens (usage_provenance='reported').
+                 If the provider reported nothing, the reservation keeps counting as spend
+                 (usage_provenance='unknown'). Cost is MODELED from list prices, labeled cost_usd_modeled.
+                 A crash between reserve and reconcile leaves a 'reserved' row that keeps charging, so a crash
+                 can never make the budget look larger than it is.
+
+  Ledger row = one provider attempt: scope, phase, model, provider, tokens_in/out, reserved_tokens,
+  est_tokens_in, cost_usd_modeled, latency_ms, cache_hit, status (reserved|ok|failed), call_id (groups the
+  attempts of one call). DB check constraints keep provenance and usage_known consistent.
+
+
+------------------------------------------------------------------------------------------------------------
+6. FETCHER SECURITY (app/core/fetcher.py)
+------------------------------------------------------------------------------------------------------------
+
+  The service fetches URLs chosen by a search engine, i.e. attacker-influenced. SSRF defenses:
+    - scheme must be http/https
+    - DNS-resolve, then reject private, loopback, link-local, reserved, multicast, non-global IPs and
+      169.254.169.254 (cloud metadata)
+    - redirects followed manually (max 5); EVERY hop is validated before it is contacted
+    - IP pinning: connect to the vetted IP directly (Host header + TLS SNI set to the hostname), so a second
+      DNS lookup can't return 127.0.0.1 (DNS rebinding)
+    - content-type allowlist: text/*, application/xhtml+xml, application/xml
+    - 2 MB cap enforced while streaming (Content-Length is not trusted); 8 s timeout
+  Then trafilatura extracts the main text, SHA-256 hashes it, and stores it as an immutable snapshot.
+
+
+------------------------------------------------------------------------------------------------------------
+7. DATA MODEL (PostgreSQL + pgvector, Alembic migrations 001-003)
+------------------------------------------------------------------------------------------------------------
+
+  jobs          id, question, max_tokens, max_minutes, mode, status, stage, deadline_at, report_md, created_at
+  subquestions  id, job_id, text, status (pending|done|failed|skipped_budget)
+  sources       id, job_id, url, domain, content_hash, snapshot, fetched_at   UNIQUE(job_id, content_hash)
+  chunks        id, source_id, subq_id, text (= snapshot[start:end]), start_char, end_char, embedding vector(384)
+  claims        id, job_id, subq_id, text, source_id, chunk_id, start_char, end_char, quote (always copied from
+                the snapshot), quote_found, entailment, entailment_reason, final_status, rewrite_count,
+                confidence, shadow_verdict, human_label
+  conflicts     id, job_id, claim_a_id, claim_b_id, note
+  ledger        see section 5
+  verifier_testset   claim/quote pairs for evaluation
+
+  Why offsets everywhere: any kept claim can be traced to the exact characters of a frozen page, which is
+  what makes the report auditable.
+
+
+------------------------------------------------------------------------------------------------------------
+8. KEY DESIGN DECISIONS (and the alternative rejected)
+------------------------------------------------------------------------------------------------------------
+
+  Citation by reference      vs letting the writer quote: quotes drift; offsets can't.
+  Two different model families vs one model checking itself: correlated errors.
+  Deterministic Stage 1 first vs LLM-only: free, can't be talked out of a wrong number, and saves tokens.
+  Fail closed everywhere     vs best effort: a missing verdict must never look like a pass.
+  One LLM gateway            vs SDK calls scattered around: budget, ledger and cache can't be bypassed.
+  Reserve-then-reconcile     vs check-then-call: concurrent calls can't overspend the same headroom.
+  Postgres + pgvector        vs a separate vector DB: one store, transactional, offsets and vectors together.
+  Immutable snapshots        vs re-fetching: the page can't change after the claim was verified.
+  LangGraph                  vs hand-written loop: explicit nodes and conditional edges (budget, rewrite loop).
+  No search key -> no sources vs a hardcoded fallback list: an earlier version faked sources; removed.
+
+
+------------------------------------------------------------------------------------------------------------
+9. TESTING
+------------------------------------------------------------------------------------------------------------
+
+  332 tests pass (pytest, real Postgres via TEST_DATABASE_URL), in fixed and random order (pytest-randomly).
+    unit           verifier branches, call_llm budget math, rate limiter with a fake clock, cache
+    property       Hypothesis: normalization idempotence (found a real U+0130 bug), quote matching, chunk spans
+    integration    real Postgres: budget accounting, pgvector ordering, report honesty, API endpoints
+    security       SSRF matrix against real local servers (redirects, rebinding, size, content-type);
+                   37-payload prompt-injection corpus
+    chaos          13 tests: real call_llm + real Groq SDK against a scriptable fake provider
+                   (429s, timeouts, malformed JSON) + 1 known gap as strict xfail (section 11)
+  Branch coverage on verifier.py, llm.py, fetcher.py: 88.2% (CI gate 85%).
+  Mutation testing (mutmut) on verifier.py: 87.0% of 570 mutants killed.
+  CI (GitHub Actions): ruff, tests, coverage gate, security tests, gitleaks, pip-audit; nightly chaos + mutation.
+
+
+------------------------------------------------------------------------------------------------------------
+10. MEASURED RUNTIME NUMBERS (see RESULTS.md for how to reproduce)
+------------------------------------------------------------------------------------------------------------
+
+  10 live jobs (Groq + Tavily): 10/10 completed, 142 LLM calls, $0.126 total (modeled from list prices),
+  per-call latency p50 1.18 s / p95 2.34 s. These runs predate vector retrieval and the writing-cap fix.
+
+  1 live job after the fixes (job 25, 40,000-token cap): status done, 17 claims drafted, 5 kept,
+  31,437 tokens, $0.0195 modeled. 12 drops: 9 fact_token_mismatch, 1 invalid_citation_ref,
+  1 verifier_invalid_output, 1 unsupported. None caused by the budget.
+
+  NOT measured: verifier precision/recall on human-labeled real claims, retrieval recall@k.
+
+
+------------------------------------------------------------------------------------------------------------
+11. LIMITATIONS (say these before an interviewer finds them)
+------------------------------------------------------------------------------------------------------------
+
+  - Single process. Jobs run as FastAPI BackgroundTasks; the LangGraph checkpointer is in memory, so a
+    restart loses in-flight jobs. Some nodes re-read the DB to skip finished work, but resume isn't
+    crash-safe.
+  - Rate limiter, circuit breaker and cache are per process / local disk; not correct across several workers.
+  - Budget can overshoot by one call's estimation error (chars/4 estimate vs provider-reported usage).
+    Pinned by a strict xfail chaos test.
+  - Cancellation is only checked between plan, research and write, not inside a node.
+  - Stage 1 is strict: "about 12" vs 12.4, aliases (Google/Alphabet) and acronyms cause false drops.
+    Negation and hedging are left to Stage 2.
+  - Conflict detection is a keyword heuristic.
+  - Auth covers only admin endpoints; job endpoints are open. Not internet-facing as is.
+  - Sub-questions are researched sequentially.
+
+
+------------------------------------------------------------------------------------------------------------
+12. HOW IT WOULD SCALE (design only, NOT built)
+------------------------------------------------------------------------------------------------------------
+
+  Step 1: separate API and workers
+    API inserts the job and enqueues it (arq/Redis, or a Postgres SKIP LOCKED queue table). N worker
+    processes pull jobs. API returns 429 + Retry-After when queue depth is over a cap.
+  Step 2: shared state
+    Postgres LangGraph checkpointer (resume after a worker crash), Redis for the rate limiter, circuit
+    breaker and LLM cache (key includes model, params, prompt version).
+  Step 3: idempotency
+    Key (job_id, node, input_hash) on LLM calls and ledger rows so a resumed node never pays twice.
+    Idempotency-Key header on POST /research.
+  Step 4: throughput
+    Research sub-questions in parallel (bounded asyncio.gather), per-user concurrency caps.
+    Bottleneck is the provider's token-per-minute limit (8k TPM on the free tier), not CPU: one job uses
+    roughly 31k tokens (job 25), so one free-tier key fits about one job per 4 minutes (31k / 8k TPM). Scaling is
+    mostly buying rate limit or adding providers to the fallback chain.
+  Step 5: observability
+    OpenTelemetry spans per node with token counts; metrics: queue depth, drop rate per reason, cost per job.
