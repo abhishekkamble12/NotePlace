@@ -288,3 +288,65 @@ async def test_rewrite_node_drops_claim_when_rewrite_fails_closed(monkeypatch):
     rc, db, state = _run_rewrite_node(monkeypatch, claim, SimpleNamespace(snapshot=SNAP), None)
     await nodes.rewrite_node(state)
     assert claim.final_status == "dropped" and claim.rewrite_count == 0
+
+
+# ---------- gaps found by the second mutation run ----------
+
+@pytest.mark.asyncio
+async def test_stage2_call_receives_the_db_session_it_was_given():
+    db = object()
+    mock = AsyncMock(return_value=verdict())
+    with patch("app.core.verifier.call_llm", mock):
+        await verify_claim(db, 1, CLAIM, "", SNAP, start=S, end=E)
+    kw = mock.call_args.kwargs
+    assert kw["db"] is db and kw["schema"] is EntailmentVerdict and kw["max_tokens"] == 250
+
+
+@pytest.mark.asyncio
+async def test_fuzzy_gate_is_inclusive_at_exactly_40_chars():
+    q = "Acme lab reported 99 percent of peak zzz"
+    assert len(q) == 40 and q not in SNAP
+    r = await verify_claim(None, 1, CLAIM, q, SNAP)
+    assert r.drop_reason == "quote_not_found"
+    assert r.match_score == pytest.approx(float(fuzz.partial_ratio(q.lower(), SNAP.lower())), abs=1.0)
+    assert r.match_score > 0.0
+
+
+@pytest.mark.asyncio
+async def test_missing_snapshot_scores_zero():
+    r = await verify_claim(None, 1, CLAIM, QUOTE, None)
+    assert r.drop_reason == "quote_not_found" and r.match_score == 0.0
+
+
+@pytest.mark.asyncio
+async def test_fact_check_reports_claim_and_quote_misses_but_not_span_facts():
+    # claim has a fact the span lacks (2013); the fuzzy-accepted quote has another (43.9%); 2023 IS in the span
+    bad_quote = QUOTE.replace("33.9%", "43.9%")
+    with patch("app.core.verifier.call_llm", AsyncMock()) as m:
+        r = await verify_claim(None, 1, "Acme lab reported 2013 efficiency.", bad_quote, SNAP)
+    assert r.drop_reason == "fact_token_mismatch"
+    assert "2013" in r.reason and "43.9%" in r.reason and "2023" not in r.reason
+    m.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_rewrite_call_contract_and_message_shape():
+    mock = AsyncMock(return_value=SimpleNamespace(rewritten_claim="x"))
+    db = object()
+    with patch("app.core.verifier.call_llm", mock):
+        await rewrite_claim(db, 3, "orig", QUOTE, "critique")
+    kw = mock.call_args.kwargs
+    assert kw["db"] is db and kw["schema"].__name__ == "RewrittenClaim" and kw["max_tokens"] == 300
+    msgs = kw["messages"]
+    assert [m["role"] for m in msgs] == ["system", "user"]
+    assert set(msgs[0]) == {"role", "content"} and set(msgs[1]) == {"role", "content"}
+
+
+@pytest.mark.asyncio
+async def test_rewrite_fence_depends_on_every_input(monkeypatch):
+    from app.core import verifier as v
+    seen = []
+    monkeypatch.setattr(v, "_fence", lambda *parts: seen.append(parts) or "DATA-x")
+    with patch("app.core.verifier.call_llm", AsyncMock(return_value=None)):
+        await rewrite_claim(None, 1, "orig", QUOTE, "critique")
+    assert seen == [("orig", QUOTE, "critique")]
