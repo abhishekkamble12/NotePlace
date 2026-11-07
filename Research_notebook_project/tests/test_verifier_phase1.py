@@ -55,6 +55,42 @@ def test_number_format_equivalence():
     assert missing_fact_tokens("it grew 6 percent", "it grew 5% last year") == ["6%"]
 
 
+SPAN_124 = "efficiency reached 12.4% in the 2023 trial"
+
+
+@pytest.mark.parametrize("claim", [
+    "efficiency reached about 12% in 2023",
+    "efficiency reached approximately 12 percent in 2023",
+    "efficiency reached roughly 12.4% in 2023",
+    "efficiency reached ~12% in 2023",
+])
+def test_hedged_rounding_passes(claim):
+    assert missing_fact_tokens(claim, SPAN_124) == []
+
+
+@pytest.mark.parametrize("claim,missing", [
+    ("efficiency reached 12% in 2023", ["12%"]),                 # exact claim, rounded value: still a drop
+    ("efficiency reached about 15% in 2023", ["15%"]),           # hedge does not cover a wrong number
+    ("efficiency reached about 12.0% in 2023", ["12.0%"]),       # hedge tolerance is at the claim's precision
+    ("efficiency reached about 12 in 2023", ["12"]),             # % vs bare number is a unit change
+    ("efficiency reached about 12% in about 2020", ["2020"]),    # hedge only covers rounding, not a different year
+    ("about 12% then 12% in 2023", ["12%"]),                     # per occurrence: the unhedged 12% is still exact
+])
+def test_hedged_rounding_stays_strict(claim, missing):
+    assert missing_fact_tokens(claim, SPAN_124) == missing
+
+
+@pytest.mark.parametrize("claim,span,missing", [
+    ("Revenue was 12 million.", "Revenue was 12 billion.", ["million"]),
+    ("Revenue was about 12 million.", "Revenue was 12.4 billion.", ["million"]),
+    ("It cost 5 crore.", "It cost 5 lakh.", ["crore"]),
+    ("Millions of users joined.", "Thousands of users joined.", ["million"]),
+    ("Revenue was 12 million.", "Revenue was 12 million dollars.", []),
+])
+def test_scale_words_must_match(claim, span, missing):
+    assert missing_fact_tokens(claim, span) == missing
+
+
 def test_normalize_text_roundtrip_offsets():
     from app.core.verifier import locate_quote
     snap = "Intro.  The  “Sycamore”\nprocessor— had 53 qubits. Tail."

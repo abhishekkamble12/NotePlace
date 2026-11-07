@@ -61,8 +61,10 @@ SCENARIOS = [
     ("Data came from NASA.", "Data came from nasa archives.", True),
     # common capitalised word mid-claim ("Study") exists lowercase in span: passes
     ("The new Study showed gains.", "The new study showed gains.", True),
-    # FALSE DROP (documented): claim is less precise than the source, tokens differ
-    ("Revenue was about 12 million.", "Revenue was 12.4 million.", False),
+    # hedged claim rounds the source at its own precision: passes (was a documented false drop)
+    ("Revenue was about 12 million.", "Revenue was 12.4 million.", True),
+    # FALSE DROP (documented): unhedged less-precise claim stays exact
+    ("Revenue was 12 million.", "Revenue was 12.4 million.", False),
     # FALSE DROP (documented): same company under another name, no alias table
     ("It was acquired by Alphabet.", "It was acquired by Google.", False),
     # FALSE DROP (documented): acronym expanded in the span

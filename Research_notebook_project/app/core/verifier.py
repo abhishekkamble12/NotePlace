@@ -170,11 +170,34 @@ def entities_in(text: str) -> set[str]:
     return found
 
 
+_SCALE_WORDS = {"hundred", "thousand", "million", "billion", "trillion", "lakh", "crore"}
+_HEDGE_BEFORE_RE = re.compile(r"(?:\b(?:about|approximately|around|roughly|nearly|almost)\s+|~\s*)$", re.IGNORECASE)
+
+
+def _rounds_to(claim_num: str, span_nums: set[str]) -> bool:
+    """True if some span number rounds to `claim_num` at the claim's own precision, with the same % unit.
+    shortcut: half-unit of the last written digit only ("about 1,000" vs 1,042 is still a drop); add order-of-magnitude
+    rounding only if measured false drops justify it."""
+    c = claim_num.rstrip("%")
+    tol = 0.5 * 10 ** -(len(c.split(".")[1]) if "." in c else 0)
+    pct = claim_num.endswith("%")
+    return any(n.endswith("%") == pct and abs(float(n.rstrip("%")) - float(c)) <= tol + 1e-9 for n in span_nums)
+
+
 def missing_fact_tokens(text: str, span: str) -> list[str]:
-    """Numbers and entities of `text` that do not appear exactly in `span`."""
+    """Numbers and entities of `text` that do not appear exactly in `span`. A number right after a hedge
+    ("about", "approximately", "~", ...) may instead be a rounding of a span number; unhedged numbers stay exact."""
     span_nums = numbers_in(span)
     span_words = {w.lower() for w in _WORD_RE.findall(_prep(span))}
-    missing = sorted(n for n in numbers_in(text) if n not in span_nums)
+    t, nums = _prep(text), set()
+    for m in _NUM_RE.finditer(t):
+        n = m.group().replace(",", "")
+        if n not in span_nums and not (_HEDGE_BEFORE_RE.search(t[: m.start()]) and _rounds_to(n, span_nums)):
+            nums.add(n)
+    missing = sorted(nums)
+    # shortcut: scale words only; other units (kg, km, $) are not compared yet
+    scale = {w.lower().rstrip("s") for w in _WORD_RE.findall(t)} & _SCALE_WORDS
+    missing += sorted(scale - {w.rstrip("s") for w in span_words})
     missing += sorted(e for e in entities_in(text) if e not in span_words)
     return missing
 

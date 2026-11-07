@@ -1,7 +1,7 @@
 {
  "data_kind": "synthetic_single_annotator",
  "dataset_sha256": "c8031d1d3b9e6905d4ede0b53291b694b475bf274142a90a58d9b310b04e3738",
- "git": "cc202a9df71659422aacfd1652c9646ebd58b132",
+ "git": "189cb3cb7c206d1278213839891df10c601c9394",
  "gold_counts": {
   "supports": 9,
   "unsupported": 13,
@@ -10,12 +10,12 @@
  "arms": {
   "stage1": {
    "n": 24,
-   "accuracy": 0.4166666666666667,
+   "accuracy": 0.4583333333333333,
    "per_class": {
     "supports": {
-     "precision": 0.35294117647058826,
-     "recall": 0.6666666666666666,
-     "f1": 0.46153846153846156,
+     "precision": 0.3888888888888889,
+     "recall": 0.7777777777777778,
+     "f1": 0.5185185185185185,
      "support": 9
     },
     "partial": {
@@ -25,19 +25,19 @@
      "support": 2
     },
     "unsupported": {
-     "precision": 0.5714285714285714,
+     "precision": 0.6666666666666666,
      "recall": 0.3076923076923077,
-     "f1": 0.4,
+     "f1": 0.42105263157894735,
      "support": 13
     }
    },
-   "macro_f1": 0.2871794871794872,
-   "weighted_f1": 0.38974358974358975,
+   "macro_f1": 0.31319038336582194,
+   "weighted_f1": 0.4225146198830409,
    "confusion_rowgold_colpred": {
     "supports": {
-     "supports": 6,
+     "supports": 7,
      "partial": 0,
-     "unsupported": 3
+     "unsupported": 2
     },
     "partial": {
      "supports": 2,
@@ -60,7 +60,7 @@
      3
     ],
     "rounding": [
-     2,
+     3,
      4
     ],
     "negation": [
@@ -108,12 +108,6 @@
      "cat": "partial",
      "gold": "partial",
      "pred": "supports"
-    },
-    {
-     "id": "7",
-     "cat": "rounding",
-     "gold": "supports",
-     "pred": "unsupported"
     },
     {
      "id": "9",

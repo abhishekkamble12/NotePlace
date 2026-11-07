@@ -24,7 +24,7 @@ Confusion (gold rows x predicted cols): supports 6/0/3, partial 2/0/0, unsupport
 
 | Cause | IDs | Meaning |
 |---|---|---|
-| False drops from number form | 3 ("one in ten" vs "10%"), 7 ("about 12" vs 12.4), 9 ("just over 1,000" vs 1,046) | Documented in `docs/VERIFIER_LIMITATIONS.md` (rounding/word numbers). Costs coverage. |
+| False drops from number form | 3 ("one in ten" vs "10%"), 7 ("about 12" vs 12.4; fixed by the hedged-rounding rule, now kept by Stage 1), 9 ("just over 1,000" vs 1,046) | Documented in `docs/VERIFIER_LIMITATIONS.md` (rounding/word numbers). Costs coverage. |
 | Semantic errors Stage 1 cannot see | 11, 12 (negation), 14, 16 (hedging), 18 (multi-hop dates), 19-21 (overstatement), 4 (omitted side effect) | 9 unsupported claims pass because every number/entity is present. These are Stage 2's job; Stage 1 alone does not claim to handle them. |
 | `partial` unreachable | 5, 6 | Stage 1 has no partial output. |
 
