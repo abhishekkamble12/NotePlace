@@ -3,8 +3,10 @@ from datetime import datetime
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
+    ARRAY,
     Boolean,
     CheckConstraint,
+    Computed,
     DateTime,
     ForeignKey,
     Index,
@@ -16,11 +18,27 @@ from sqlalchemy import (
     func,
     true,
 )
+from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
 class Base(DeclarativeBase):
     pass
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    external_sub: Mapped[str] = mapped_column(String(255), unique=True)  # identity-provider subject (Week 4: Cognito)
+
+
+class Notebook(Base):
+    __tablename__ = "notebooks"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    title: Mapped[str] = mapped_column(String(255), default="")
+
 
 class Job(Base):
     __tablename__ = "jobs"
@@ -46,10 +64,14 @@ class SubQuestion(Base):
 
 class Source(Base):
     __tablename__ = "sources"
-    __table_args__ = (UniqueConstraint("job_id", "content_hash"),)   # Deduplication idempotency
+    __table_args__ = (UniqueConstraint("job_id", "content_hash"), UniqueConstraint("notebook_id", "content_hash", name="uq_sources_notebook_hash"))  # dedup per job / per notebook
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    job_id: Mapped[int] = mapped_column(ForeignKey("jobs.id"))
+    job_id: Mapped[int | None] = mapped_column(ForeignKey("jobs.id"), nullable=True)  # NULL for notebook sources
+    notebook_id: Mapped[int | None] = mapped_column(ForeignKey("notebooks.id"), nullable=True, index=True)
+    kind: Mapped[str] = mapped_column(String(10), default="url")       # "url" | "pdf"
+    title: Mapped[str] = mapped_column(String(500), default="")
+    page_offsets: Mapped[list[int] | None] = mapped_column(ARRAY(Integer), nullable=True)  # snapshot offset where each page starts
     url: Mapped[str] = mapped_column(String(1000))
     domain: Mapped[str] = mapped_column(String(255), default="")      # For multi-domain independence checks
     content_hash: Mapped[str] = mapped_column(String(64))             # SHA-256
@@ -66,6 +88,12 @@ class Chunk(Base):
     start_char: Mapped[int | None] = mapped_column(Integer, nullable=True)
     end_char: Mapped[int | None] = mapped_column(Integer, nullable=True)
     embedding = mapped_column(Vector(384))                            # 384 dimensions for bge-small
+    notebook_id: Mapped[int | None] = mapped_column(ForeignKey("notebooks.id"), nullable=True, index=True)  # copied from the source: tenant filter without a join
+    section: Mapped[str | None] = mapped_column(Text, nullable=True)  # nearest preceding heading
+    page_start: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 1-based, derived from Source.page_offsets
+    page_end: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    chunker: Mapped[str | None] = mapped_column(String(20), nullable=True)  # "fixed" | "structure"
+    tsv = mapped_column(TSVECTOR, Computed("to_tsvector('english', text)", persisted=True), nullable=True)
 
 class Claim(Base):
     __tablename__ = "claims"
