@@ -1,7 +1,7 @@
 # app/core/llm.py
 """
 Centralized call_llm wrapper and budget governor for CiteGuard.
-Every model call in both Phase 1 (Research) and Phase 2 (Notebook) MUST pass through this module.
+Every model call MUST pass through this module.
 Bypassing call_llm breaks the budget, ledger, and rate-limiting guarantees.
 """
 import asyncio
@@ -70,7 +70,7 @@ class ProviderUnavailableError(Exception):
 
 class CircuitBreaker:
     """Per-provider breaker: opens after `threshold` consecutive failures, half-opens after `cooldown` seconds.
-    shortcut: in-process state, so it is per worker; move to Redis in Phase 4."""
+    shortcut: in-process state, so it is per process; a multi-process deployment needs a shared store (e.g. Redis)."""
 
     def __init__(self, threshold: int = 3, cooldown: float = 30.0, clock_fn: Callable[[], float] | None = None):
         self.threshold = threshold
@@ -378,8 +378,7 @@ async def check_budget_caps(
     """
     scope_type, scope_id = scope
     if scope_type != "job":
-        # For Phase 2 notebooks, if a token_budget is tracked
-        return None, 100_000
+        raise ValueError(f"Unknown budget scope {scope_type!r}: only ('job', id) is budgeted")  # fail closed, no bypass
 
     job = await db.get(Job, scope_id, with_for_update=lock)  # lock=True serialises reservations per job
     if not job:

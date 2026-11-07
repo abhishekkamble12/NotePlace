@@ -19,7 +19,7 @@ from app.core.verifier import (
     normalize_text,
     verify_claim,
 )
-from app.models import Claim
+from app.models import Claim, Job
 from app.writer import DraftClaim, resolve_citation, sentence_spans
 
 SNAP = ("Background text. In late 2023 the Acme lab reported a peak efficiency of 33.9% for the new perovskite cell, "
@@ -149,10 +149,20 @@ def isolated(tmp_path, monkeypatch):
     llm.breaker.reset()
 
 
-def _call(**kw):
+def _job_db():
+    """Mock session for a job with a large budget and nothing spent, so these tests exercise retries, not caps."""
     db = AsyncMock()
     db.add = MagicMock()
-    return call_llm(scope=("notebook", 1), phase="verifying", model="m1",
+    db.get.return_value = Job(id=1, max_tokens=1_000_000)
+    res = MagicMock()
+    res.one.return_value = MagicMock(total_tokens=0, phase_tokens=0)
+    db.execute.return_value = res
+    return db
+
+
+def _call(**kw):
+    db = _job_db()
+    return call_llm(scope=("job", 1), phase="verifying", model="m1",
                     messages=[{"role": "user", "content": uuid.uuid4().hex}], max_tokens=50, db=db, **kw)
 
 
@@ -175,10 +185,9 @@ async def test_failover_to_second_provider_and_ledger_names_it(isolated, monkeyp
             raise RuntimeError("429")
         return '{"a": 1}', 3, 4
 
-    db = AsyncMock()
-    db.add = MagicMock()
+    db = _job_db()
     with patch.object(llm, "_call_provider", fake):
-        out = await call_llm(scope=("notebook", 1), phase="verifying", model="m1",
+        out = await call_llm(scope=("job", 1), phase="verifying", model="m1",
                              messages=[{"role": "user", "content": uuid.uuid4().hex}], max_tokens=50, schema=Out, db=db)
     assert out.a == 1
     assert db.add.call_args[0][0].model == "m2"
@@ -348,3 +357,12 @@ async def test_budget_exhaustion_fails_closed_as_drop_not_crash():
     with patch("app.core.verifier.call_llm", AsyncMock(side_effect=BudgetExceededError("cap"))):
         r = await verify_claim(None, 1, "Acme reported 33.9% efficiency.", QUOTE, SNAP)
     assert r.action == "dropped" and r.drop_reason == "budget_exceeded"
+
+
+@pytest.mark.asyncio
+async def test_unknown_budget_scope_fails_closed_instead_of_bypassing_caps(isolated):
+    prov = AsyncMock(return_value=('{"a": 1}', 1, 1))
+    with patch.object(llm, "_call_provider", prov), pytest.raises(ValueError, match="Unknown budget scope"):
+        await call_llm(scope=("notebook", 1), phase="verifying", model="m1",
+                       messages=[{"role": "user", "content": uuid.uuid4().hex}], max_tokens=50, db=_job_db())
+    prov.assert_not_awaited()

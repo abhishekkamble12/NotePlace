@@ -100,7 +100,7 @@ class Conflict(Base):
 class LedgerEntry(Base):
     """
     Cost, latency, and token ledger.
-    scope_type + scope_id supports ("job", job_id) for Phase 1 and ("notebook", notebook_id) for Phase 2.
+    scope_type + scope_id: currently always ("job", job_id).
     """
     __tablename__ = "ledger"
     __table_args__ = (
@@ -111,7 +111,7 @@ class LedgerEntry(Base):
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    scope_type: Mapped[str] = mapped_column(String(20), default="job", index=True) # "job" | "notebook"
+    scope_type: Mapped[str] = mapped_column(String(20), default="job", index=True) # "job"
     scope_id: Mapped[int] = mapped_column(Integer, index=True)
     phase: Mapped[str] = mapped_column(String(20))                                 # "planning" | "research" | "writing" | "verifying" | "reserve"
     kind: Mapped[str] = mapped_column(String(20), default="llm")                   # "llm" | "search" | "fetch" | "embed"

@@ -1,5 +1,5 @@
 # app/core
 """
-Reusable core modules for CiteGuard (Phase 1 engine & Phase 2 notebook).
+Core modules for CiteGuard: LLM gateway, verifier, fetcher, search, embeddings, accounting.
 Contains call_llm, budget governor, ledger, cache, verifier, fetcher, and embeddings.
 """

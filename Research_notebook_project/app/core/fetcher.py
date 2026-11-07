@@ -1,7 +1,6 @@
 # app/core/fetcher.py
 """
 SSRF-safe web fetcher and evidence ingestion for CiteGuard.
-Reused in Phase 1 (open-web research) and Phase 2 (URL source ingestion).
 """
 import hashlib
 import ipaddress

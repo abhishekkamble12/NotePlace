@@ -28,6 +28,10 @@ Errors (6/24): paraphrase 1 and 3 dropped; rounding 7 ("about 12" vs 12.4) and 9
 Data: `evals/benchmark_questions.json` dev (q1,q5,q6,q9,q12,q13) + test (q2,q8,q10,q14), live Groq + Tavily, shadow mode, fresh cache dir.
 Command: `python scripts/run_eval_jobs.py --split dev --yes` (and `--split test`), then `python scripts/summarize_real_runs.py`.
 Caveat: q2, q10 and q13 were re-run after two bug fixes (writing-phase budget cap, rate-limiter IndexError), so the 10 jobs span more than one commit; each file's `provenance` records its git commit.
+These runs predate two later changes: the writer now gets the top-4 chunks by pgvector cosine distance (it used to get
+the first 4 chunks per sub-question), and the writing cap was raised from 15% to 60% of the job budget after the
+ledger showed writing uses ~64% of tokens. Cost and latency per call are not expected to change, but these runs are
+not re-measured on the current code.
 
 | Metric | Value |
 |---|---|
@@ -44,10 +48,10 @@ Offline arms only (no key needed): `python scripts/eval_hard_cases.py`; analysis
 ## Not yet measured (blocked)
 | Item | Blocker |
 |---|---|
-| Verifier precision/retention/F1 with CIs on human labels | label `evals/real/dev_label_sheet.csv` (73) and `test_label_sheet.csv` (43) per docs/ANNOTATION_GUIDELINES.md; 116 total, short of the 150 target |
+| Verifier precision/retention/F1 with CIs on human labels | independent human labels for `evals/real/dev_label_sheet.csv` (73) and `test_label_sheet.csv` (43) per docs/ANNOTATION_GUIDELINES.md; 116 total, short of the 150 target |
 | Cohen's kappa | second annotator on a subset (`python scripts/cohens_kappa.py`) |
 | NLI and LLM-judge baselines | NLI needs ~1.6 GB download; LLM-judge arm not built |
-| Retrieval recall@k, hybrid BM25 | gold-source labels; the pipeline does not query embeddings at write time today |
+| Retrieval recall@k (vector top-4 vs first-4 baseline), hybrid BM25 | gold-source labels |
 | Ablation A/B/C with tokens, cost, p50/p95 | live provider runs + approval |
 
 ## Reproduce the reporter

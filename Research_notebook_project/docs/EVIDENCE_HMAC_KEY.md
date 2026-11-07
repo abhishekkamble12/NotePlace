@@ -17,15 +17,15 @@ Put it in `.env` (git-ignored) locally, or in your platform's secret store in de
 in logs, issues or CI output. `.env.example` holds a placeholder only.
 
 ## Deploy
-Set it as an environment variable (docker-compose reads it from `.env` and refuses to start the `app` and `worker`
-services if it is unset; Hugging Face Spaces: Settings -> Secrets).
+Set it as an environment variable (for example `uvicorn app.main:app --env-file .env`, or your platform's secret
+store). The API and the MCP server refuse to start if it is unset.
 
-## Shared instances (API + worker + MCP)
+## Shared instances (API + MCP)
 Every process that builds Stage 2 prompts must use the **same** key. Different keys still work and stay safe, but the
 prompt text differs, so the SHA-256 disk cache will not hit across processes and token spend rises.
 
 ## Missing key
-- Startup: the API (lifespan), the arq worker and the MCP server raise `EvidenceKeyMissingError` and do not start.
+- Startup: the API (lifespan) and the MCP server raise `EvidenceKeyMissingError` and do not start.
 - Runtime fallback (key removed after start): `verify_claim` drops the claim with `verifier_unconfigured` and makes no
   LLM call; `rewrite_claim` returns `None`. Verification stays fail-closed.
 

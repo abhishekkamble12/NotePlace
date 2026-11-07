@@ -1,133 +1,130 @@
-# CiteGuard: Budget-Bounded Research Pipeline with Citation Checks
+# CiteGuard
 
-> **Status: work in progress.** Measured so far: verifier accuracy on 24 synthetic, author-labeled hard cases and cost/latency on 10 real pipeline runs ([RESULTS.md](RESULTS.md)). Precision/recall on human-labeled real claims is **not measured yet**. Earlier synthetic metrics were removed (see [AUDIT.md](AUDIT.md)).
+**A research pipeline that refuses to ship a claim it can't trace to a source.** You ask a question. CiteGuard
+splits it into sub-questions, searches the web, and stores immutable page snapshots. It retrieves the most relevant
+chunks with pgvector, has an LLM draft claims that cite exact snapshot offsets, and runs every claim through a
+two-stage verifier before it can appear in the report. Every LLM call goes through one gateway that enforces a token
+budget and writes a ledger row.
 
-CiteGuard takes a research question, splits it into sub-questions, fetches web pages, has an LLM draft claims that each cite a quote from a page, and then checks every claim with a two-stage verifier before putting it in a Markdown report. All LLM calls go through one gateway (`app/core/llm.py`) that enforces a token budget and writes a ledger row per call.
+> "Verified" means *attributed to a span of a fetched page*, not *true*. If a page is wrong, CiteGuard will faithfully
+> cite the wrong page.
 
-"Verified" here means *the quote was found in the fetched page and a second model judged that the quote supports the claim*. It does **not** mean the claim is true.
+**Stack:** Python 3.12, FastAPI, LangGraph, PostgreSQL + pgvector, SQLAlchemy (async) + Alembic,
+sentence-transformers (bge-small), Groq (writer `openai/gpt-oss-120b`, verifier `qwen/qwen3.8-27b`), Tavily/Brave
+search, MCP server, pytest + Hypothesis + mutmut.
 
 ---
 
-## 1. What the code does today
+## How it works
 
 ```mermaid
 flowchart TD
-    User([User / MCP client]) -->|POST /research| API[FastAPI app]
-    API -->|BackgroundTasks, same process| Run[execute_research_job]
-    Run --> Graph
-
-    subgraph Graph [LangGraph StateGraph, in-memory checkpointer]
-        Plan[plan] --> Research[research: sequential loop<br/>search, fetch, chunk, embed]
-        Research --> Write[write: first 4 chunks per sub-question<br/>LLM drafts claim + quote]
-        Write --> Verify[verify: Stage 1 + Stage 2]
-        Verify -->|any non-supports verdict, rewrite_count < 1| Rewrite[rewrite once]
-        Rewrite --> Verify
-        Verify --> Analyze[analyze: keyword conflict heuristic,<br/>domain-count confidence]
-        Analyze --> Render[render: Markdown report]
-    end
-
-    Graph -.-> Ledger[(Postgres: jobs, claims, ledger, sources, chunks)]
-    plan -.->|budget / cancel check on plan, research, write edges| Render
+    Q([POST /research or MCP tool]) --> Plan[plan: LLM splits the question into sub-questions]
+    Plan --> Research[research: search, SSRF-safe fetch, snapshot,<br/>chunk with offsets, embed bge-small into pgvector]
+    Research --> Write[write: top-4 chunks per sub-question by cosine distance,<br/>LLM drafts claims citing chunk + sentence offsets]
+    Write --> Verify[verify: Stage 1 deterministic, Stage 2 LLM entailment]
+    Verify -->|partial, at most once| Rewrite[rewrite against the snapshot span]
+    Rewrite --> Verify
+    Verify --> Analyze[analyze: cross-source conflicts, source-diversity confidence]
+    Analyze --> Render[render: 7-section Markdown report with audit trail]
+    Plan -. budget or cancel .-> Render
+    Research -. budget or cancel .-> Render
+    Write -. budget or cancel .-> Render
 ```
 
-- **API**: FastAPI (`app/main.py`). `POST /research` creates a job row and runs the pipeline as a FastAPI background task in the API process.
-- **Budget**: `call_llm` checks job and per-phase token caps before each call (research 50%, writing 15%, verifying 25%, planning 10%, reserve 10%) and records real provider token counts in the ledger. Cost in USD is *modeled* from a hardcoded price table, not billed.
-- **Rate limiting**: in-process sliding-window tokens-per-minute limiter (estimated tokens). A daily limit constant exists but is not enforced.
-- **Cache**: SHA-256 keyed JSON files on local disk (`~/.cache/citeguard/llm`).
-- **Fetcher**: scheme and resolved-IP checks against private/loopback/link-local ranges, 8 s timeout, 2 MB cap, Trafilatura text extraction.
-- **Storage**: Postgres with pgvector. Chunk embeddings (bge-small) are stored, but retrieval does not query them yet.
-- **Models**: writer `openai/gpt-oss-120b`, verifier `qwen/qwen3.8-27b` (both via Groq; the original llama-3.3-70b and gemma2-9b-it were retired by Groq, so earlier numbers are not comparable), search via Tavily, then Brave, then a hardcoded fallback URL list.
-- **MCP server**: `python -m app.mcp.server` exposes `research` and `verify_quote`.
+### The verifier (`app/core/verifier.py`)
 
-### The two-stage verifier (`app/core/verifier.py`)
+1. **Citation by reference.** The writer cites `chunk_id` + sentence indices, never a quote. Code copies the span out
+   of the stored snapshot, so the writer cannot misquote a source.
+2. **Stage 1, deterministic, 0 tokens.** The offsets must be valid, and every number, date and named entity in the
+   claim must appear in the cited span. "33.9%" in the source and "43.9%" in the claim is a drop
+   (`fact_token_mismatch`) before any LLM is called.
+3. **Stage 2, LLM entailment.** A different model family judges `supports | partial | unsupported` from the span
+   only. It never sees the writer's text. The span is fenced as untrusted data with an HMAC-derived delimiter that
+   page text cannot forge. Output is schema-validated and retried once. If it's still invalid, the claim is dropped.
+4. **Fail closed.** Provider outage, exhausted budget, invalid output or a missing key all drop the claim with a
+   reason code. None of them can let a claim through.
 
-1. **Citation by reference**: the writer cites `chunk_id` + sentence indices; the quote is copied from the stored snapshot by code, so the writer cannot misquote.
-2. **Stage 1 (deterministic)**: offsets must be valid, and every number, date and named entity in the claim must appear in the cited span (a changed digit drops the claim as `fact_token_mismatch`).
-3. **Stage 2 (LLM entailment)**: a different model judges `supports | partial | unsupported` on the snapshot span only, never the writer's text. The span is fenced as untrusted data with an HMAC delimiter, output is schema-validated, retried once, then the claim is dropped (fail closed).
-4. `call_llm` has provider fallback and a circuit breaker; an outage or budget exhaustion drops the claim with a reason code instead of failing the job.
+### Engineering details worth asking about
 
-Known limitations: [docs/VERIFIER_LIMITATIONS.md](docs/VERIFIER_LIMITATIONS.md) (e.g. "about 12" vs 12.4 is a false drop; negation and hedging pass Stage 1 and rely entirely on Stage 2). No auth on endpoints.
+- **Token budget with reservations.** `call_llm` locks the job row, checks job and per-phase caps against everything
+  already charged (including in-flight calls), and writes a `reserved` ledger row before the request. Provider-reported
+  usage replaces the reservation afterwards. Details: [docs/ACCOUNTING.md](docs/ACCOUNTING.md).
+- **Provider fallback and circuit breaker** in the same gateway, so one provider outage doesn't stall a job.
+- **SSRF-hardened fetcher.** Scheme check, and the resolved IP is checked against private, loopback, link-local and
+  metadata ranges. Every redirect hop is validated *before* it is contacted. The connection is pinned to the vetted IP
+  (no second DNS lookup, so no rebinding). A text-only content-type allowlist and a 2 MB cap are enforced while
+  streaming.
+- **API hygiene.** Bounded inputs (question length, budget range), admin key on the export and label-import endpoints
+  (fails closed if unset), CSV formula-injection escaping, and failed-job reports that never echo exception text.
+- **MCP server.** `python -m app.mcp.server` exposes `research` and `verify_quote` to any MCP client.
 
 ---
 
-## 2. Results
+## Testing
 
-Full numbers, data provenance and reproduction commands: [RESULTS.md](RESULTS.md). Summary:
+All counts below are from runs on this branch. Reproduce with the commands shown.
 
-| Metric | Value | Data |
+| What | Result | Command |
 |---|---|---|
-| Verifier 3-class accuracy, full vs Stage 1 only vs best string baseline | 0.750 vs 0.417 vs 0.500 | 24 synthetic hard cases, author-labeled |
-| Kept-claim precision / retention | 5/5 (Wilson 95% CI 0.57-1.00) / 5/9 | same 24 cases |
-| Real pipeline runs | 10/10 jobs, 142 LLM calls, $0.126 modeled total, per-call p50 1.18 s / p95 2.34 s | 10 live questions |
-| Precision / recall / kappa on real claims | **not measured**: 116 claims await human labels | `evals/real/*_label_sheet.csv` |
+| Unit, property, integration (real Postgres) and API tests | 331 passed | `pytest` (with `TEST_DATABASE_URL` set) |
+| Fault injection: real `call_llm` + Groq SDK against a scriptable fake provider (429s, timeouts, malformed JSON) | 13 passed, 1 known gap (below) | `make test-chaos` |
+| Branch coverage on `verifier.py`, `llm.py`, `fetcher.py` | 88.2% (CI gate 85%) | `make test-cov` |
+| Mutation score on `verifier.py` (mutmut, 570 mutants) | 87.0% killed | `make test-mutation` |
+| Security suite: SSRF matrix against real local servers, 37-payload prompt-injection corpus | included above | `make test-sec` |
+
+Property tests (Hypothesis) found a real normalization bug, now fixed with a regression test: normalizing `İ`
+followed by a combining mark wasn't idempotent, so a quote copied from such a snapshot couldn't be found again. Mutation testing found that `rewrite_claim` had no tests at all. While fixing that, I found that the rewrite
+step was sending the writer's quote instead of the snapshot span. Both are fixed.
 
 ---
 
-## 3. Planned, not built
+## Measured results
 
-- A job queue (jobs run as FastAPI background tasks in the API process today).
-- Postgres LangGraph checkpointer (the graph uses `MemorySaver`, so a process crash loses graph state; only some nodes re-read the DB to skip finished work).
-- Vector retrieval of top-k chunks per sub-question.
-- A real difference between `single` and `multi` modes (today only `shadow` changes behavior).
-- Held-out, human-labeled evaluation set with baselines and confidence intervals.
-- Shared (Redis) rate limiter, idempotent LLM calls and ledger writes, cooperative cancellation inside nodes.
-- Auth, PII handling, prompt-injection guardrails, red-team harness, observability, a fixed CI eval gate.
+Full methodology and reproduction steps: [RESULTS.md](RESULTS.md).
 
----
-
-## 4. Design notes
-
-- **Different model family as verifier**: the idea is to avoid the writer confirming its own errors. Not yet measured.
-- **Token caps rather than USD**: tokens are provider-reported; USD is modeled.
-- **Snapshots in the database**: the fetched text is stored at fetch time and deduplicated by content hash, so checks run against the bytes that were retrieved.
-- **Small graph state**: snapshots and embeddings stay in Postgres; graph state holds IDs and statuses.
+| Measurement | Value | Data |
+|---|---|---|
+| Real pipeline runs | 10/10 jobs completed, 142 LLM calls, $0.126 total (modeled from list prices), per-call latency p50 1.18 s / p95 2.34 s | 10 live questions, Groq + Tavily |
+| Verifier on hard cases, full vs Stage 1 only vs best string baseline | 3-class accuracy 0.750 vs 0.417 vs 0.500 | 24 **synthetic, author-written** cases, so diagnostic only |
+| Precision / recall on real claims with human labels | **not measured yet** | label sheets exist for 116 real claims, pending independent labeling |
 
 ---
 
-## 5. MCP
+## Quickstart
 
-```json
-{
-  "mcpServers": {
-    "citeguard": {
-      "command": "python",
-      "args": ["-m", "app.mcp.server"],
-      "cwd": "/path/to/Research_notebook_project",
-      "env": { "GROQ_API_KEY": "your-groq-api-key" }
-    }
-  }
-}
-```
-
-Tools: `research(question, max_tokens=60000, max_minutes=8, mode="multi")` and `verify_quote(claim, quote, context)`.
-
----
-
-## 6. Quickstart
-
-Prerequisites: Python 3.12+, Docker, a Groq API key.
+Prerequisites: Python 3.12+, Docker, a Groq API key, and a Tavily or Brave API key. Without a search key, sub-questions
+get no sources; the pipeline never invents them.
 
 ```bash
 cd Research_notebook_project
-docker compose up -d        # Postgres + pgvector
-uv sync
+cp .env.example .env              # add GROQ_API_KEY, TAVILY_API_KEY, CITEGUARD_EVIDENCE_HMAC_KEY
+docker compose up -d              # Postgres + pgvector on :5432
+uv sync --extra test
 uv run alembic upgrade head
-uv run pytest -v
-uv run ruff check .
-uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+uv run uvicorn app.main:app --port 8000 --env-file .env
 ```
 
-Reproduce the numbers: see [RESULTS.md](RESULTS.md).
+```bash
+curl -X POST localhost:8000/research -H "Content-Type: application/json" \
+     -d '{"question": "What efficiency records have perovskite-silicon tandem solar cells reached?", "max_tokens": 40000}'
+curl localhost:8000/jobs/<job_id>            # status, claims kept, tokens and modeled cost
+curl localhost:8000/jobs/<job_id>/report     # the Markdown report
+```
+
+Tests: `TEST_DATABASE_URL=postgresql+asyncpg://citeguard:citeguard_password@localhost:5432/citeguard uv run pytest`.
 
 ---
 
-## 7. Status
+## Limitations
 
-- [x] `call_llm` gateway with token budget, ledger, in-process TPM limiter, disk cache
-- [x] SSRF IP/scheme checks in the fetcher
-- [x] LangGraph pipeline (in-memory checkpointer) with a single rewrite pass
-- [x] MCP server with `research` and `verify_quote`
-- [x] Unit tests (run `pytest` for the current count and result)
-- [x] Measured: verifier on 24 synthetic hard cases, cost/latency on 10 real runs (RESULTS.md)
-- [ ] Precision/recall on human-labeled real claims
-- [ ] Everything under "Planned, not built"
+- **Single process.** Jobs run as FastAPI background tasks with an in-memory LangGraph checkpointer, so a restart loses
+  in-flight jobs. There's no queue and no multi-worker rate limiter.
+- **The budget can be exceeded by one call's estimation error.** Caps are checked against a chars/4 estimate before the
+  call. If the provider reports more usage afterwards, it's recorded, and the overshoot is pinned by an explicit
+  `xfail` test.
+- **Stage 1 is strict by design.** "About 12" vs 12.4, entity aliases (Google/Alphabet) and acronyms cause false drops.
+  Negation and hedging rely entirely on Stage 2. See [docs/VERIFIER_LIMITATIONS.md](docs/VERIFIER_LIMITATIONS.md).
+- **Retrieval hasn't been benchmarked.** Top-4 by cosine distance replaced "first 4 chunks", and there's no recall@k
+  measurement yet.
+- **Auth covers only the admin endpoints.** Job endpoints are open, so this isn't meant to face the internet as-is.

@@ -201,7 +201,7 @@ class EvidenceKeyMissingError(RuntimeError):
 
 
 def require_evidence_key() -> None:
-    """Startup check for every entry point that can run Stage 2 (API, worker, MCP). Raises a clear configuration
+    """Startup check for every entry point that can run Stage 2 (API, MCP). Raises a clear configuration
     error instead of running a service that silently drops every claim. verify_claim still fails closed per call."""
     if not os.environ.get("CITEGUARD_EVIDENCE_HMAC_KEY"):
         raise EvidenceKeyMissingError(

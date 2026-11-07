@@ -24,7 +24,7 @@ the same expression. Reported usage replaces the reservation in both directions 
    rollback, `BudgetExceededError`, no row, no lock held.
 2. Provider request (timeout 60 s).
 3. `finish`: the same row becomes `ok`/`failed` with reported usage, or stays unknown with its reservation.
-A worker killed between 1 and 3 leaves the `reserved` row, which keeps charging (visible as "interrupted" in reports).
+A process killed between 1 and 3 leaves the `reserved` row, which keeps charging (visible as "interrupted" in reports).
 Each failover provider and each schema-retry round is its own attempt, so fallback usage is recorded separately and counted once.
 
 ## Concurrency guarantee and limits
@@ -35,7 +35,7 @@ Each failover provider and each schema-retry round is its own attempt, so fallba
   charge is the larger reported number. The cap is enforced on reservations, not on provider behavior.
 - Conservative cost: failed attempts with unknown usage keep their whole reservation (up to `max_tokens` each), so a 429/timeout
   storm can exhaust a budget on usage that never happened. Chosen deliberately over undercounting.
-- The circuit breaker, rate limiter and cache are still in-process / local disk (Phase 4). There is **no idempotency key** yet:
+- The circuit breaker, rate limiter and cache are still in-process / local disk. There is **no idempotency key** yet:
   a crash-resumed node that is not served by the cache will call the provider again and be charged again.
 
 ## Historical rows
