@@ -1,10 +1,10 @@
 # app/mcp/server.py
 """
-CiteGuard Official Model Context Protocol (MCP) Server (Week 4 / Spec §D23).
+CiteGuard MCP server.
 Exposes the verified citation research engine to MCP clients (Claude Desktop, Cursor, Antigravity).
 
 Tools:
-- research(question, max_tokens=60000, max_minutes=8, mode="multi"):
+- research(question, max_tokens=60000, max_minutes=8, mode="standard"):
     Decomposes questions, gathers evidence, drafts claims, verifies citations,
     and returns a verified Markdown report and claim metadata.
 - verify_quote(claim, quote, context=""):
@@ -35,7 +35,7 @@ class ResearchInput(BaseModel):
     question: str = Field(description="The research question to investigate with citation verification.")
     max_tokens: int = Field(default=60000, description="Hard token budget cap for the research job.")
     max_minutes: int = Field(default=8, description="Maximum wall-clock execution time in minutes.")
-    mode: str = Field(default="multi", description="'multi' (parallel sub-questions) or 'single' (sequential).")
+    mode: str = Field(default="standard", description="'standard' (drop rejected claims) or 'shadow' (record verdicts, keep all).")
 
 
 @mcp_server.tool()
@@ -43,7 +43,7 @@ async def research(
     question: str,
     max_tokens: int = 60000,
     max_minutes: int = 8,
-    mode: str = "multi"
+    mode: str = "standard"
 ) -> str:
     """
     Executes a budget-bounded, citation-verified research run on any question.
@@ -121,7 +121,7 @@ async def verify_quote(
             question=f"verify_quote: {claim[:200]}",
             max_tokens=VERIFY_QUOTE_MAX_TOKENS,
             max_minutes=2,
-            mode="single",
+            mode="standard",
             status="running",
             stage="verifying",
         )

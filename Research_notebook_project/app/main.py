@@ -59,9 +59,9 @@ class ResearchRequest(BaseModel):
     question: str = Field(min_length=5, max_length=2000, description="The research question to investigate")
     max_tokens: int = Field(default=50_000, ge=1_000, le=500_000, description="Hard token budget cap")
     max_minutes: int = Field(default=8, ge=1, le=60, description="Time deadline in minutes")
-    mode: Literal["single", "multi", "shadow"] = Field(
-        default="multi",
-        description="Execution mode: multi (parallel), single (sequential), or shadow (records verifier verdicts without dropping)"
+    mode: Literal["standard", "shadow"] = Field(
+        default="standard",
+        description="standard drops claims the verifier rejects; shadow records the verdicts but keeps every claim"
     )
 
 @app.get("/health")

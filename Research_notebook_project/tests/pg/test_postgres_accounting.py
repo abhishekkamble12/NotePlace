@@ -97,7 +97,7 @@ def test_migration_from_002_labels_old_rows_legacy_and_is_reversible(newdb):
     async def seed():
         eng = create_async_engine(url, poolclass=NullPool)
         async with eng.begin() as c:
-            await c.execute(text("INSERT INTO jobs (id, question, max_tokens, max_minutes, mode, status, stage, report_md) VALUES (1,'q',50000,8,'multi','done','rendering','')"))
+            await c.execute(text("INSERT INTO jobs (id, question, max_tokens, max_minutes, mode, status, stage, report_md) VALUES (1,'q',50000,8,'standard','done','rendering','')"))
             await c.execute(text("INSERT INTO ledger (scope_type, scope_id, phase, kind, model, tokens_in, tokens_out, cost_usd_modeled, latency_ms, cache_hit) VALUES ('job',1,'writing','llm','m',700,50,0.001,10,false),('job',1,'writing','llm','m',0,0,0,0,true)"))
         await eng.dispose()
     _run(seed())

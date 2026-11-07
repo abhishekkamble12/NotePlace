@@ -34,7 +34,7 @@ class ConflictState(TypedDict):
 class ResearchGraphState(TypedDict):
     job_id: int
     question: str
-    mode: Literal["single", "multi", "shadow"]
+    mode: Literal["standard", "shadow"]
     stage: str
     status: str
     max_tokens: int

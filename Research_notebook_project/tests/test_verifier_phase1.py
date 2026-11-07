@@ -244,10 +244,10 @@ def test_chunk_spans_offsets_roundtrip_raw_text():
 # ---------------- verify_node routing ----------------
 
 def _state():
-    return {"job_id": 1, "mode": "multi", "claims": []}
+    return {"job_id": 1, "mode": "standard", "claims": []}
 
 
-async def _run_verify(claim, verdict_result, mode="multi"):
+async def _run_verify(claim, verdict_result, mode="standard"):
     from app.research.nodes import verify_node
     db = AsyncMock()
     res = MagicMock()

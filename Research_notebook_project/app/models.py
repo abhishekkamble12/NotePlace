@@ -29,7 +29,7 @@ class Job(Base):
     question: Mapped[str] = mapped_column(Text)
     max_tokens: Mapped[int] = mapped_column(Integer, default=50_000)
     max_minutes: Mapped[int] = mapped_column(Integer, default=8)
-    mode: Mapped[str] = mapped_column(String(10), default="multi")     # "single" | "multi" | "shadow"
+    mode: Mapped[str] = mapped_column(String(10), default="standard")  # "standard" | "shadow"
     status: Mapped[str] = mapped_column(String(20), default="queued")  # "queued" | "done" | "partial" | "failed" | "cancelled"
     stage: Mapped[str] = mapped_column(String(20), default="planning") # "planning" | "researching" | "writing" | "verifying" | "rendering"
     deadline_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

@@ -9,7 +9,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.embeddings import embed_texts
+from app.core.embeddings import embed_text, embed_texts
 from app.core.fetcher import chunk_spans, fetch_url_snapshot
 from app.core.llm import PHASE_BUDGET_SHARES, spend_expr
 from app.core.search import search_web
@@ -227,11 +227,12 @@ async def write_node(state: ResearchGraphState) -> dict[str, Any]:
             sq_id = sq["id"]
             sq_text = sq["text"]
 
-            # Retrieve top chunks for this subquestion using plain SQLAlchemy query
+            # Top-4 chunks for this sub-question by cosine distance to its embedding (pgvector)
+            q_emb = embed_text(sq_text)
             chunks_res = await db.execute(
                 select(Chunk.id, Chunk.source_id, Chunk.start_char, Chunk.text)
-                .where(Chunk.subq_id == sq_id, Chunk.start_char.is_not(None))
-                .order_by(Chunk.id)
+                .where(Chunk.subq_id == sq_id, Chunk.start_char.is_not(None), Chunk.embedding.is_not(None))
+                .order_by(Chunk.embedding.cosine_distance(q_emb), Chunk.id)
                 .limit(4)
             )
             evidence_snippets = [

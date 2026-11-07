@@ -14,7 +14,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from app.core.fetcher import SSRFSecurityError, validate_url_security
-from app.core.search import search_fallback, search_web
+from app.core.search import search_web
 from app.models import Claim, Job, Source, SubQuestion
 from app.reporter import generate_markdown_report
 from app.research.graph import (
@@ -33,7 +33,7 @@ async def test_tiny_budget_diverts_to_partial_report():
     state = {
         "job_id": 42,
         "question": "What are the latest developments in solid-state batteries?",
-        "mode": "multi",
+        "mode": "standard",
         "stage": "researching",
         "status": "running",
         "max_tokens": 100,  # Tiny budget
@@ -126,7 +126,7 @@ def test_check_rewrite_needed_routing():
 async def test_report_renderer_sections():
     """Verify report includes summary, findings, disagreements, gaps, dropped, refs, and metadata."""
     mock_db = AsyncMock()
-    job = Job(id=1, question="Test Question", status="done", mode="multi", stage="rendering", max_tokens=50000)
+    job = Job(id=1, question="Test Question", status="done", mode="standard", stage="rendering", max_tokens=50000)
     mock_db.get.return_value = job
 
     # Mock subquestions
@@ -178,18 +178,15 @@ async def test_report_renderer_sections():
 
 
 # =====================================================================
-# 5. Search Fallback & SSRF Protection
+# 5. Search & SSRF Protection
 # =====================================================================
 
 @pytest.mark.asyncio
-async def test_search_web_and_fallback():
-    """Verify search returns valid URLs even in offline/test environments."""
-    urls = search_fallback("quantum computing sycamore", top_n=2)
-    assert len(urls) >= 1
-    assert all(u.startswith("https://") for u in urls)
-
-    unified_urls = await search_web("quantum computing", top_n=2)
-    assert len(unified_urls) >= 1
+async def test_search_without_providers_returns_no_urls(monkeypatch):
+    """No API key -> no sources. The pipeline must not invent URLs."""
+    monkeypatch.delenv("TAVILY_API_KEY", raising=False)
+    monkeypatch.delenv("BRAVE_API_KEY", raising=False)
+    assert await search_web("quantum computing", top_n=2) == []
 
 
 def test_ssrf_rejects_private_ranges():
@@ -203,14 +200,14 @@ def test_ssrf_rejects_private_ranges():
 
 
 # =====================================================================
-# 6. End-to-End Multi-Mode Pipeline Lifecycle
+# 6. Node wiring (mocked)
 # =====================================================================
 
 @pytest.mark.asyncio
-async def test_full_multi_mode_pipeline_lifecycle():
+async def test_node_wiring_with_mocked_db_and_llm():
     """
-    Simulates end-to-end multi-mode pipeline execution through all graph stages:
-    plan -> research -> write -> verify -> analyze -> render.
+    Node-to-node state wiring (write -> verify -> analyze -> render) with a MOCKED database, writer and verifier.
+    This is not an end-to-end run: no real DB, model or network is involved.
     """
     from app.models import Claim, SubQuestion
     from app.research.nodes import analyze_node, render_node, verify_node, write_node
@@ -218,7 +215,7 @@ async def test_full_multi_mode_pipeline_lifecycle():
     mock_db = AsyncMock()
     mock_db.add = MagicMock()
 
-    job = Job(id=77, question="Quantum supremacy benchmark analysis", status="running", stage="planning", max_tokens=50000, mode="multi")
+    job = Job(id=77, question="Quantum supremacy benchmark analysis", status="running", stage="planning", max_tokens=50000, mode="standard")
     mock_db.get.return_value = job
 
     # 1. Plan node test
@@ -231,7 +228,7 @@ async def test_full_multi_mode_pipeline_lifecycle():
     state = {
         "job_id": 77,
         "question": "Quantum supremacy benchmark analysis",
-        "mode": "multi",
+        "mode": "standard",
         "stage": "planning",
         "status": "running",
         "max_tokens": 50000,
@@ -247,7 +244,10 @@ async def test_full_multi_mode_pipeline_lifecycle():
     mock_ctx.__aenter__.return_value = mock_db
     mock_ctx.__aexit__.return_value = None
 
-    with patch("app.research.nodes.AsyncSessionLocal", return_value=mock_ctx):
+    with (
+        patch("app.research.nodes.AsyncSessionLocal", return_value=mock_ctx),
+        patch("app.research.nodes.embed_text", return_value=[0.0] * 384),
+    ):
         # 2. Write node
         empty_claims_res = MagicMock()
         empty_claims_res.scalars.return_value.all.return_value = []
