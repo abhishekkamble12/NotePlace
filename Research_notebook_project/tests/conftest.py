@@ -4,11 +4,18 @@ import uuid
 
 import pytest
 from alembic.config import Config
+from hypothesis import HealthCheck
+from hypothesis import settings as _hyp_settings
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 
 from alembic import command
+
+# too_slow judges input-generation speed, not the code under test. Seed 2 stalled one draw for 2.1s (environmental) and
+# failed an unrelated property test. Assertions and the 200ms deadline stay on.
+_hyp_settings.register_profile("citeguard", suppress_health_check=[HealthCheck.too_slow])
+_hyp_settings.load_profile("citeguard")
 
 BASE_URL = os.getenv("TEST_DATABASE_URL")
 ROOT = os.path.dirname(os.path.dirname(__file__))
