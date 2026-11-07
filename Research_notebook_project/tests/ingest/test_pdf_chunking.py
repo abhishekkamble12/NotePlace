@@ -137,3 +137,15 @@ def test_real_bge_tokenizer_keeps_chunks_under_the_embedding_limit():
     count = chunking.bge_token_counter()
     for c in structure_chunks(doc, count):
         assert count(doc.snapshot[c.start:c.end]) <= chunking.MAX_TOKENS <= 512
+
+
+def test_heading_is_never_a_chunk_by_itself(monkeypatch):
+    """Heading + next paragraph just over MAX_TOKENS: the heading overflows into the paragraph's chunk instead of
+    becoming a heading-only chunk."""
+    monkeypatch.setattr(chunking, "MAX_TOKENS", 70)
+    doc = parse_pdf(make_pdf([[("Short Head", 18), (words(69, "p"), 10), ("Other Head", 18), (words(69, "q"), 10)]]))
+    chunks = structure_chunks(doc, wc)
+    heads = {(b.start, b.end) for b in doc.blocks if b.kind == "heading"}
+    assert all((c.start, c.end) not in heads for c in chunks)
+    assert doc.snapshot[chunks[0].start:chunks[0].end].startswith("Short Head")
+    assert wc(doc.snapshot[chunks[0].start:chunks[0].end]) <= chunking.HARD_MAX_TOKENS

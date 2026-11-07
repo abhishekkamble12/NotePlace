@@ -18,6 +18,7 @@ from app.ingest.pdf import Block, ParsedPdf, page_of, split_long_block
 MIN_TOKENS = 300
 MAX_TOKENS = 480
 OVERLAP_MAX = 100
+HARD_MAX_TOKENS = 512   # bge-small input limit
 
 
 @dataclass(frozen=True)
@@ -68,6 +69,8 @@ def structure_chunks(doc: ParsedPdf, count: Callable[[str], int] | None = None) 
             j += 1
         if j == i:  # a unit alone exceeds the limit only if the splitter failed; take it rather than loop forever
             j = i + 1
+        if j == i + 1 and units[i].kind == "heading" and j < n and toks[i] + toks[j] <= HARD_MAX_TOKENS:
+            j += 1  # a heading is never a chunk by itself: let it overflow MAX_TOKENS up to the embedding limit
         while j - i > 1 and units[j - 1].kind == "heading":  # never strand a heading at the end of a chunk
             j -= 1
         out.append(_span(units[i].start, units[j - 1].end, _last_heading(snap, units, i, sec_at_start), doc.page_offsets))
