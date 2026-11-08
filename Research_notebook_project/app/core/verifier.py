@@ -272,6 +272,7 @@ async def verify_claim(
     *,
     start: int | None = None,
     end: int | None = None,
+    scope: tuple[str, int] | None = None,
 ) -> VerificationResult:
     """
     Stage 1: resolve the span. With (start, end) the citation is by reference and the quote is ignored entirely;
@@ -306,7 +307,7 @@ async def verify_claim(
         return _drop("verifier_unconfigured", "Evidence HMAC key not configured; dropped (fail closed)", True, score, (s, e))
     try:
         parsed = await call_llm(
-            scope=("job", job_id), phase="verifying", model=verifier_model,
+            scope=scope or ("job", job_id), phase="verifying", model=verifier_model,
             messages=messages, max_tokens=250, schema=EntailmentVerdict, db=db,
         )
     except ValidationError:

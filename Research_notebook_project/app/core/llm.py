@@ -12,7 +12,7 @@ import time
 import uuid
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, TypeVar
 
@@ -22,7 +22,7 @@ from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import AsyncSessionLocal
-from app.models import Job, LedgerEntry
+from app.models import Conversation, Job, LedgerEntry
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -50,6 +50,9 @@ PHASE_BUDGET_SHARES: dict[str, float] = {
     "verifying": 0.35,
     "reserve": 0.10,
 }
+# Conversation scope: one turn = one answer call + one Stage 2 call per sentence, so verifying needs as much as chat
+# (with the job shares, verifying would hit its 35% cap after ~4 turns and every later answer would be dropped).
+CONVERSATION_PHASE_SHARES: dict[str, float] = {"chat": 0.50, "verifying": 0.50, "query_rewrite": 0.10}
 
 # Groq free-tier rate limits
 GROQ_TPM_LIMIT = 8_000      # Tokens per minute
@@ -364,6 +367,26 @@ class AttemptReserver:
         await self.session.commit()
 
 
+BUDGETED_SCOPES = {"job": Job, "conversation": Conversation}
+
+
+def user_daily_token_cap() -> int:
+    return int(os.getenv("CITEGUARD_USER_DAILY_TOKENS", "200000"))
+
+
+async def _check_user_daily_cap(db: AsyncSession, user_id: int, estimated_tokens: int) -> None:
+    """All of one user's conversations share a rolling 24 h token cap, so opening new conversations cannot reset it."""
+    used = (await db.execute(
+        select(func.coalesce(func.sum(spend_expr()).filter(LedgerEntry.cache_hit.is_(False)), 0))
+        .join(Conversation, Conversation.id == LedgerEntry.scope_id)
+        .where(LedgerEntry.scope_type == "conversation", Conversation.user_id == user_id,
+               LedgerEntry.created_at > func.now() - timedelta(days=1))
+    )).scalar_one()
+    cap = user_daily_token_cap()
+    if int(used) + estimated_tokens > cap:
+        raise BudgetExceededError(f"User daily token cap reached: used {used} + est {estimated_tokens} > cap {cap}")
+
+
 async def check_budget_caps(
     db: AsyncSession,
     scope: tuple[str, int],
@@ -377,15 +400,17 @@ async def check_budget_caps(
     Spend = provider-reported tokens where known, else the retained reservation (see spend_expr).
     """
     scope_type, scope_id = scope
-    if scope_type != "job":
-        raise ValueError(f"Unknown budget scope {scope_type!r}: only ('job', id) is budgeted")  # fail closed, no bypass
+    if scope_type not in BUDGETED_SCOPES:
+        raise ValueError(f"Unknown budget scope {scope_type!r}: only {sorted(BUDGETED_SCOPES)} are budgeted")  # fail closed
 
-    job = await db.get(Job, scope_id, with_for_update=lock)  # lock=True serialises reservations per job
+    job = await db.get(BUDGETED_SCOPES[scope_type], scope_id, with_for_update=lock)  # lock serialises reservations per scope row
     if not job:
-        raise ValueError(f"Job {scope_id} not found")
+        raise ValueError(f"{scope_type} {scope_id} not found")
+    if scope_type == "conversation":
+        await _check_user_daily_cap(db, job.user_id, estimated_tokens)
 
     max_tokens = job.max_tokens
-    phase_share = PHASE_BUDGET_SHARES.get(phase, 0.25)
+    phase_share = (CONVERSATION_PHASE_SHARES if scope_type == "conversation" else PHASE_BUDGET_SHARES).get(phase, 0.25)
     phase_cap = int(max_tokens * phase_share)
 
     # Sum non-cached tokens spent on this job
@@ -495,7 +520,7 @@ async def call_llm(
         est_prompt_tokens = estimate_prompt_tokens(messages)
         est_total_tokens = est_prompt_tokens + max_tokens
         job, _ = await check_budget_caps(session, scope, phase, est_total_tokens)
-        deadline_at = job.deadline_at if job else None
+        deadline_at = getattr(job, "deadline_at", None)  # conversations have no deadline
 
         # 3. Rate limiter check (wait if approaching 8k TPM limit)
         await rate_limiter.acquire(est_total_tokens, model=model, deadline_at=deadline_at)

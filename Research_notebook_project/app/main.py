@@ -20,10 +20,13 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth import get_current_user
+from app.chat import answer as answer_question
 from app.core.accounting import ledger_summary
 from app.core.verifier import require_evidence_key
 from app.db import get_db, init_db
-from app.models import Claim, Job, LedgerEntry
+from app.ingest.service import PdfError, create_notebook, ingest_pdf
+from app.models import Chunk, Claim, Conversation, Job, LedgerEntry, Message, Notebook, Source, User
 from app.pipeline import execute_research_job
 
 
@@ -202,6 +205,108 @@ async def cancel_job(job_id: int, db: AsyncSession = Depends(get_db)):
         job.status = "cancelled"
         await db.commit()
     return {"job_id": job.id, "status": job.status}
+
+# ---------------------------------------------------------------------------
+# Notebooks, PDF sources and grounded chat. Every query filters by the caller's user id in SQL; another user's
+# notebook or conversation is a 404, so ids do not reveal what exists.
+# ---------------------------------------------------------------------------
+MAX_PDF_BYTES = 20 * 1024 * 1024
+
+
+class NotebookIn(BaseModel):
+    title: str = Field(default="", max_length=255)
+
+
+class ChatIn(BaseModel):
+    question: str = Field(min_length=2, max_length=2000)
+
+
+async def _notebook(db: AsyncSession, user: User, notebook_id: int) -> Notebook:
+    nb = (await db.execute(select(Notebook).where(Notebook.id == notebook_id, Notebook.user_id == user.id))).scalar_one_or_none()
+    if nb is None:
+        raise HTTPException(status_code=404, detail="Notebook not found")
+    return nb
+
+
+async def _conversation(db: AsyncSession, user: User, conversation_id: int) -> Conversation:
+    c = (await db.execute(select(Conversation).where(Conversation.id == conversation_id, Conversation.user_id == user.id))).scalar_one_or_none()
+    if c is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    return c
+
+
+def _message_out(m: Message) -> dict:
+    return {"id": m.id, "role": m.role, "content": m.content, "standalone_question": m.standalone_question,
+            "citations": m.citations or [], "dropped": m.dropped or [], "abstained": m.abstained,
+            "abstain_reason": m.abstain_reason, "created_at": m.created_at}
+
+
+@app.post("/notebooks", status_code=201)
+async def create_notebook_ep(body: NotebookIn, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    nb = await create_notebook(db, user.id, body.title)
+    await db.commit()
+    return {"id": nb.id, "title": nb.title}
+
+
+@app.get("/notebooks")
+async def list_notebooks(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    rows = (await db.execute(select(Notebook).where(Notebook.user_id == user.id).order_by(Notebook.id))).scalars().all()
+    return [{"id": n.id, "title": n.title} for n in rows]
+
+
+@app.post("/notebooks/{notebook_id}/sources", status_code=201)
+async def upload_pdf(notebook_id: int, file: UploadFile = File(...), user: User = Depends(get_current_user),
+                     db: AsyncSession = Depends(get_db)):
+    await _notebook(db, user, notebook_id)
+    data = await file.read(MAX_PDF_BYTES + 1)
+    if len(data) > MAX_PDF_BYTES:
+        raise HTTPException(status_code=413, detail=f"PDF larger than {MAX_PDF_BYTES // (1024 * 1024)} MB")
+    if not data.startswith(b"%PDF-"):  # magic bytes, not the client-supplied content type
+        raise HTTPException(status_code=415, detail="Only PDF files are accepted")
+    try:
+        # shortcut: parsing + embedding run inside the request (CPU-bound, blocks this worker); move to the SQS worker in Week 4
+        src, created = await ingest_pdf(db, user.id, notebook_id, data, filename=(file.filename or "")[:200])
+    except PdfError as e:
+        raise HTTPException(status_code=422, detail=f"Unreadable PDF: {e}")
+    n = (await db.execute(select(func.count(Chunk.id)).where(Chunk.source_id == src.id))).scalar_one()
+    await db.commit()
+    return {"source_id": src.id, "title": src.title, "created": created, "chunks": n}
+
+
+@app.get("/notebooks/{notebook_id}/sources")
+async def list_sources(notebook_id: int, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    await _notebook(db, user, notebook_id)
+    rows = (await db.execute(select(Source).where(Source.notebook_id == notebook_id).order_by(Source.id))).scalars().all()
+    return [{"id": s.id, "title": s.title, "pages": len(s.page_offsets or []), "fetched_at": s.fetched_at} for s in rows]
+
+
+@app.post("/notebooks/{notebook_id}/conversations", status_code=201)
+async def create_conversation(notebook_id: int, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    await _notebook(db, user, notebook_id)
+    c = Conversation(notebook_id=notebook_id, user_id=user.id)
+    db.add(c)
+    await db.commit()
+    return {"id": c.id, "notebook_id": notebook_id, "max_tokens": c.max_tokens}
+
+
+@app.post("/conversations/{conversation_id}/messages")
+async def chat(conversation_id: int, body: ChatIn, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    conv = await _conversation(db, user, conversation_id)
+    return _message_out(await answer_question(db, user.id, conv, body.question))
+
+
+@app.get("/conversations/{conversation_id}/messages")
+async def list_messages(conversation_id: int, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    await _conversation(db, user, conversation_id)
+    rows = (await db.execute(select(Message).where(Message.conversation_id == conversation_id).order_by(Message.id))).scalars().all()
+    return [_message_out(m) for m in rows]
+
+
+@app.get("/conversations/{conversation_id}/ledger")
+async def conversation_ledger(conversation_id: int, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    await _conversation(db, user, conversation_id)
+    return await ledger_summary(db, "conversation", conversation_id)
+
 
 @app.get("/export/claims.csv", dependencies=[Depends(require_admin)])
 async def export_claims_csv(db: AsyncSession = Depends(get_db)):

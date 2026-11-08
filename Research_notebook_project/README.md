@@ -118,6 +118,21 @@ curl localhost:8000/jobs/<job_id>            # status, claims kept, tokens and m
 curl localhost:8000/jobs/<job_id>/report     # the Markdown report
 ```
 
+Chat with your PDFs (needs `CITEGUARD_DEV_TOKENS=mytoken:me` in `.env`; every notebook call needs the bearer token):
+
+```bash
+H="Authorization: Bearer mytoken"
+curl -X POST localhost:8000/notebooks -H "$H" -H "Content-Type: application/json" -d '{"title": "papers"}'   # -> {"id": 1}
+curl -X POST localhost:8000/notebooks/1/sources -H "$H" -F "file=@paper.pdf"                                # parse, chunk, embed
+curl -X POST localhost:8000/notebooks/1/conversations -H "$H"                                              # -> {"id": 1}
+curl -X POST localhost:8000/conversations/1/messages -H "$H" -H "Content-Type: application/json"      -d '{"question": "What dataset did they evaluate on?"}'
+```
+
+Each answer sentence cites a chunk by reference; code copies the quote from the PDF text, and the same two-stage
+verifier as the research pipeline checks it. Unverified sentences are removed and listed under `dropped` with the
+reason; if none survive, the answer is an abstention (`abstained: true`, `abstain_reason`). "Verified" means
+attributed to your documents, not true.
+
 Tests: `TEST_DATABASE_URL=postgresql+asyncpg://citeguard:citeguard_password@localhost:5432/citeguard uv run pytest`.
 
 ---
@@ -134,4 +149,5 @@ Tests: `TEST_DATABASE_URL=postgresql+asyncpg://citeguard:citeguard_password@loca
   Negation and hedging rely entirely on Stage 2. See [docs/VERIFIER_LIMITATIONS.md](docs/VERIFIER_LIMITATIONS.md).
 - **Retrieval hasn't been benchmarked.** Top-4 by cosine distance replaced "first 4 chunks", and there's no recall@k
   measurement yet.
-- **Auth covers only the admin endpoints.** Job endpoints are open, so this isn't meant to face the internet as-is.
+- **Auth is a dev stub.** Notebook and chat endpoints need a static bearer token (`CITEGUARD_DEV_TOKENS`, no expiry); job endpoints (`/research`, `/jobs/*`) are still open. Not meant to face the internet as-is.
+- **Chat answers are not measured yet.** Retrieval recall is measured (RESULTS.md section 4); answer faithfulness and abstention quality are not. PDF upload parses and embeds inside the request (blocks a worker for large files).

@@ -18,7 +18,7 @@ from sqlalchemy import (
     func,
     true,
 )
-from sqlalchemy.dialects.postgresql import TSVECTOR
+from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -38,6 +38,32 @@ class Notebook(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     title: Mapped[str] = mapped_column(String(255), default="")
+
+
+class Conversation(Base):
+    """A chat thread over one notebook. Its own token budget: ledger scope ("conversation", id)."""
+    __tablename__ = "conversations"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    notebook_id: Mapped[int] = mapped_column(ForeignKey("notebooks.id"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    max_tokens: Mapped[int] = mapped_column(Integer, default=60_000)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    conversation_id: Mapped[int] = mapped_column(ForeignKey("conversations.id"), index=True)
+    role: Mapped[str] = mapped_column(String(10))                     # "user" | "assistant"
+    content: Mapped[str] = mapped_column(Text, default="")
+    standalone_question: Mapped[str | None] = mapped_column(Text, nullable=True)  # follow-up rewritten for retrieval
+    citations: Mapped[list | None] = mapped_column(JSONB, nullable=True)  # kept sentences: chunk/source/offsets/page/quote
+    dropped: Mapped[list | None] = mapped_column(JSONB, nullable=True)    # sentences the verifier removed, with the reason
+    abstained: Mapped[bool] = mapped_column(Boolean, default=False)
+    abstain_reason: Mapped[str] = mapped_column(String(40), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class Job(Base):
@@ -128,7 +154,7 @@ class Conflict(Base):
 class LedgerEntry(Base):
     """
     Cost, latency, and token ledger.
-    scope_type + scope_id: currently always ("job", job_id).
+    scope_type + scope_id: ("job", job_id) or ("conversation", conversation_id).
     """
     __tablename__ = "ledger"
     __table_args__ = (
