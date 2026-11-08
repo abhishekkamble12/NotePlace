@@ -21,6 +21,7 @@ from summarize_real_runs import summarize  # noqa: E402
 REAL, RUNS = ROOT / "evals" / "real", ROOT / "evals" / "eval_runs"
 OUT, README = ROOT / "evals" / "results.json", ROOT / "README.md"
 RETR = ROOT / "evals" / "retrieval_results.json"
+ABST = ROOT / "evals" / "abstention_results.json"
 START, END = "<!-- results:start -->", "<!-- results:end -->"
 LABEL_PROVENANCE = "LLM-drafted, author-reviewed, single annotator (no kappa yet)"
 
@@ -80,6 +81,8 @@ def build() -> dict:
         "pipeline_runs": {"data": "10 live questions, Groq + Tavily; cost modeled from list prices, not billed", **summarize()},
         # recorded by scripts/run_retrieval_eval.py (needs Postgres), so copied here, not recomputed
         "retrieval": {"file": "evals/retrieval_results.json", "file_sha256": sha(RETR), **json.loads(RETR.read_text(encoding="utf-8"))},
+        "abstention": {"file": "evals/abstention_results.json", "file_sha256": sha(ABST),
+                       **{k: v for k, v in json.loads(ABST.read_text(encoding="utf-8")).items() if k != "per_question"}},
     }
 
 
@@ -108,6 +111,12 @@ def table(r: dict) -> str:
                 f" {' / '.join(f'{r10[k]['mean']:.3f}' for k in ('E1', 'E2', 'E3', 'E4'))}; rerank gain {d['delta']:+.3f}"
                 f" (paired CI {d['ci95'][0]:+.3f} to {d['ci95'][1]:+.3f}); E4 p50 {e['E4']['latency_ms']['total']['p50'] / 1000:.2f} s on CPU"
                 f" | QASPER dev, {rm['questions']} questions over {rm['papers']} papers in one notebook, human evidence spans; recorded run |")
+    ab = r["abstention"]["test"]
+    rows.append(f"| Chat abstention from retrieval score alone (E6a, test split; gate left off) |"
+                f" refuses {ab['false_abstention_rate']:.3f} of answerable (Wilson {ci(ab['false_abstention_wilson'])}) to catch"
+                f" {ab['unanswerable_abstention_rate']:.3f} of unanswerable (Wilson {ci(ab['unanswerable_abstention_wilson'])}); AUROC"
+                f" {ab['auroc_answerable_vs_unanswerable']:.3f} | QASPER, {ab['n_answerable']} answerable / {ab['n_unanswerable']}"
+                f" out-of-notebook questions, threshold set on dev papers; recorded run |")
     return "\n".join([START, "| Measurement | Value | Data |", "|---|---|---|", *rows, END])
 
 

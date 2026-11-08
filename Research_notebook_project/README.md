@@ -93,6 +93,7 @@ drafted by an LLM and reviewed by the author, with one annotator, so they are no
 | Verifier on hard cases: full (recorded live run) vs Stage 1 (current code) vs fuzzy-90 baseline | 3-class accuracy 0.750 vs 0.458 vs 0.500 | 24 cases, synthetic, author-labeled, diagnostic only |
 | Real pipeline runs | 10 jobs, 142 LLM calls, $0.1262 total, per-call latency p50 1.18 s / p95 2.34 s | 10 live questions, Groq + Tavily; cost modeled from list prices, not billed |
 | PDF retrieval recall@10 (E1 fixed+dense / E2 structure+dense / E3 +hybrid / E4 +rerank) | 0.270 / 0.308 / 0.323 / 0.375; rerank gain +0.053 (paired CI +0.019 to +0.088); E4 p50 2.29 s on CPU | QASPER dev, 166 questions over 60 papers in one notebook, human evidence spans; recorded run |
+| Chat abstention from retrieval score alone (E6a, test split; gate left off) | refuses 0.155 of answerable (Wilson 0.093-0.247) to catch 0.200 of unanswerable (Wilson 0.070-0.452); AUROC 0.595 | QASPER, 84 answerable / 15 out-of-notebook questions, threshold set on dev papers; recorded run |
 <!-- results:end -->
 
 ---
@@ -147,7 +148,7 @@ Tests: `TEST_DATABASE_URL=postgresql+asyncpg://citeguard:citeguard_password@loca
 - **Stage 1 is strict by design.** Unhedged rounding ("12" vs 12.4), bounds ("just over 1,000"), entity aliases
   (Google/Alphabet) and acronyms cause false drops. Units other than % and scale words are not compared.
   Negation and hedging rely entirely on Stage 2. See [docs/VERIFIER_LIMITATIONS.md](docs/VERIFIER_LIMITATIONS.md).
-- **Retrieval hasn't been benchmarked.** Top-4 by cosine distance replaced "first 4 chunks", and there's no recall@k
+- **Web-research retrieval hasn't been benchmarked** (PDF retrieval is, RESULTS.md section 4). Top-4 by cosine distance replaced "first 4 chunks", and there's no recall@k
   measurement yet.
 - **Auth is a dev stub.** Notebook and chat endpoints need a static bearer token (`CITEGUARD_DEV_TOKENS`, no expiry); job endpoints (`/research`, `/jobs/*`) are still open. Not meant to face the internet as-is.
 - **Chat answers are not measured yet.** Retrieval recall is measured (RESULTS.md section 4); answer faithfulness and abstention quality are not. PDF upload parses and embeds inside the request (blocks a worker for large files).

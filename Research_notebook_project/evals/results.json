@@ -1,4 +1,60 @@
 {
+ "abstention": {
+  "dev": {
+   "auroc_answerable_vs_unanswerable": 0.6695011337868481,
+   "false_abstention_rate": 0.08163265306122448,
+   "false_abstention_wilson": [
+    0.032202296241712225,
+    0.19189387041486136
+   ],
+   "n_answerable": 49,
+   "n_unanswerable": 18,
+   "n_unanswerable_in_paper": 2,
+   "unanswerable_abstention_rate": 0.2222222222222222,
+   "unanswerable_abstention_wilson": [
+    0.09000781913382,
+    0.4521502645230549
+   ],
+   "unanswerable_in_paper_abstention": [
+    0,
+    2
+   ]
+  },
+  "file": "evals/abstention_results.json",
+  "file_sha256": "d87944c29c59c785b19491cf0c901cc77dbe3176787b76893fa3cc47f3b2842d",
+  "meta": {
+   "experiment": "E6a retrieval-score abstention (no LLM)",
+   "git": "2804bd2954d0b1c0999501b2e951f5ff83a303d8",
+   "git_dirty_tracked_files": false,
+   "gold_sha256": "54da6f573ec1a2247c1ea1c17e2c03fd5664af454091f68fda3a2053d57b1df3",
+   "papers_in_notebook": 47,
+   "papers_out": 13,
+   "policy": "answer iff top score >= t; t keeps >= 90% of dev answerable",
+   "retriever": "hybrid+rerank top-1 score (cross-encoder/ms-marco-MiniLM-L-6-v2 logit)",
+   "unanswerable_in_paper_source": "QASPER all-annotators-unanswerable"
+  },
+  "test": {
+   "auroc_answerable_vs_unanswerable": 0.5952380952380952,
+   "false_abstention_rate": 0.15476190476190477,
+   "false_abstention_wilson": [
+    0.09273222805420128,
+    0.24698835991323098
+   ],
+   "n_answerable": 84,
+   "n_unanswerable": 15,
+   "n_unanswerable_in_paper": 8,
+   "unanswerable_abstention_rate": 0.2,
+   "unanswerable_abstention_wilson": [
+    0.07047420643610414,
+    0.4518593533465045
+   ],
+   "unanswerable_in_paper_abstention": [
+    1,
+    8
+   ]
+  },
+  "threshold": -3.945115089416504
+ },
  "hard_cases": {
   "accuracy": {
    "full_recorded_live_run": 0.75,

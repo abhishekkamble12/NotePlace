@@ -26,7 +26,7 @@ ABSTAIN_TEXT = "I could not find support for an answer in this notebook's docume
 
 def abstain_min_score() -> float | None:
     """Abstain before calling the model when the best reranked chunk scores below this. Unset = off.
-    shortcut: off until calibrated on the QASPER dev split (Step 4); never tune it on the test split."""
+    Off by default: E6a (RESULTS.md section 5) found the score near chance at separating answerable questions."""
     v = os.getenv("CITEGUARD_ABSTAIN_MIN_RERANK_SCORE", "")
     return float(v) if v else None
 

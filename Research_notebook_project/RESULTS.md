@@ -88,6 +88,27 @@ gain; hybrid alone is not shown to help, and is kept only as the candidate gener
 dense+rerank is not measured). Cost: rerank adds ~2.2 s per query on this CPU (12 cores, no GPU); latency is from one
 machine and is not portable. Recall is a ceiling for answer quality, not answer quality: chat answers are not measured yet.
 
+### 5. Retrieval-score abstention for chat, E6a (negative result)
+Question: can the top cross-encoder score tell "this notebook can answer" from "it cannot" before any LLM call?
+Command: `python scripts/run_abstention_eval.py --database-url postgresql+asyncpg://...` (local models, no LLM, $0).
+Recorded at git `2804bd2` (clean tree) in `evals/abstention_results.json`.
+Design, fixed before any score was seen: papers are assigned by SHA-256 of their id, 1 in 3 OUT of the notebook (47 in,
+13 out), and independently 50/50 into dev and test by paper. Answerable = gold questions about an IN paper;
+unanswerable = gold questions about an OUT paper (the notebook holds other NLP papers, so these are near-misses);
+plus QASPER questions about IN papers that every annotator marked unanswerable (only 10, reported as counts).
+Policy: answer iff top score >= t, t chosen on dev to keep >= 90% of answerable questions (t = -3.945, a logit).
+
+| Split | False abstention on answerable | Abstains on unanswerable (out of notebook) | In-paper unanswerable abstained | AUROC |
+|---|---|---|---|---|
+| dev (threshold chosen here) | 4/49 = 0.082 (Wilson 0.032-0.192) | 4/18 = 0.222 (0.090-0.452) | 0/2 | 0.670 |
+| **test** | **13/84 = 0.155 (0.093-0.247)** | **3/15 = 0.200 (0.070-0.452)** | 1/8 | **0.595** |
+
+Decision: **the score gate stays off** (`CITEGUARD_ABSTAIN_MIN_RERANK_SCORE` unset). On held-out papers it refuses
+15.5% of answerable questions to catch 20% of unanswerable ones; AUROC 0.60 is close to chance. Abstention therefore
+rests on the model's own `abstain` flag and on the verifier dropping unsupported sentences, which are not measured yet
+(E5/E6b need live LLM runs). Caveats: 15 test negatives give a wide interval; "answerable" means the evidence is in the
+notebook, not that retrieval found it.
+
 ## Not yet measured (blocked)
 | Item | Blocker |
 |---|---|
