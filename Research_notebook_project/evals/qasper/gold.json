@@ -18,7 +18,7 @@
   "rejected_papers": {
    "1608.01084": "no_question_with_aligned_gold"
   },
-  "git": "6534d3accac65747cd571967c78331e7a54c4e6e"
+  "git": "7b779ad15f07efe803470afa936fbcba849472e5"
  },
  "papers": {
   "1503.00841": {
@@ -52,9 +52,9 @@
   "1603.08594": {
    "title": "Prepositional Attachment Disambiguation Using Bilingual Parsing and Alignments",
    "pdf_sha256": "763490e6b0705643cb609bd2f4bc6fb8524a99b2b62eb03671bedc14f5ccbb47",
-   "snapshot_sha256": "3a1584b65ae1c610d69f01b14c469320e53b78725c6171664f8a347888911405",
+   "snapshot_sha256": "39077659d9cc10317664fa8e76bb6d5b3df905c2465072a8037eaf42a260dd47",
    "n_pages": 6,
-   "snapshot_chars": 19558
+   "snapshot_chars": 19533
   },
   "1603.09631": {
    "title": "Data Collection for Interactive Learning through the Dialog",
@@ -66,9 +66,9 @@
   "1604.00400": {
    "title": "Revisiting Summarization Evaluation for Scientific Articles",
    "pdf_sha256": "0b2fea89e21a497e5156bc0d952a4b05781956ba0fced4a9c115aee920e6b790",
-   "snapshot_sha256": "6a3a3d6861cf3923dbb5448c752f510a26c05201241123cdf8e195eaa8833b04",
+   "snapshot_sha256": "3abde3b1cb1a92204801580ae8a80e7542f9968e5594d2121d6038086d8a00a7",
    "n_pages": 8,
-   "snapshot_chars": 43766
+   "snapshot_chars": 43761
   },
   "1604.00727": {
    "title": "Character-Level Question Answering with Attention",
@@ -129,9 +129,9 @@
   "1606.03676": {
    "title": "External Lexical Information for Multilingual Part-of-Speech Tagging",
    "pdf_sha256": "cf48c8b560da2edc5d8a9c505abfb5f036c26876b0ff6fe9709f5d04bc6e2afa",
-   "snapshot_sha256": "7a37d9a9da7297fcdc7a09b0febf972c42249507c356993cc8bbcd5578305e1b",
+   "snapshot_sha256": "05c95856532bf2bbc37263962336493c45df9d6bc329fff1a6620e5a0edbdf10",
    "n_pages": 18,
-   "snapshot_chars": 38910
+   "snapshot_chars": 38902
   },
   "1608.01884": {
    "title": "Winograd Schemas and Machine Translation",
@@ -171,9 +171,9 @@
   "1610.00956": {
    "title": "Embracing data abundance: BookTest Dataset for Reading Comprehension",
    "pdf_sha256": "feca90ffee2f82acbb07f0027c7caa3fc07cdc5f3d1c891139f91048b3701daf",
-   "snapshot_sha256": "9ece9f3d7f7da8a4d528a9db0c40ba19cf3ba28dbcdbe154c84d9a448601d08c",
+   "snapshot_sha256": "23a90a8a4a7e2305bd6f73d0e5ec33d40777f90e59d71c7c40b165ccd51606b7",
    "n_pages": 10,
-   "snapshot_chars": 41114
+   "snapshot_chars": 41113
   },
   "1610.07809": {
    "title": "How Document Pre-processing affects Keyphrase Extraction Performance",
@@ -213,9 +213,9 @@
   "1611.03599": {
    "title": "UTCNN: a Deep Learning Model of Stance Classificationon on Social Media Text",
    "pdf_sha256": "b4d5ba7265c6e169f3aab007f93663536cc87c9438a85dd342a0ef7fd6f6652f",
-   "snapshot_sha256": "275db42fa9ac008b01fe1123625d98bc4c1a246227c665b7e4885045e1ea9e8c",
+   "snapshot_sha256": "1e1a98659e7f9006e7d274894984cb71069184f9cb32628d3ae2a10a14f221d1",
    "n_pages": 11,
-   "snapshot_chars": 41261
+   "snapshot_chars": 41255
   },
   "1611.04798": {
    "title": "Toward Multilingual Neural Machine Translation with Universal Encoder and Decoder",
@@ -227,9 +227,9 @@
   "1611.08661": {
    "title": "Knowledge Graph Representation with Jointly Structural and Textual Encoding",
    "pdf_sha256": "78d18d721ce2ca5c6beda04388fa8da29f56e7bdfa6c438ceea115f935e37706",
-   "snapshot_sha256": "150f398990064556eb02cf554375a8969ed82ba41fb5bf5f4548e5ce5fcaea3d",
+   "snapshot_sha256": "977b690daa31e34f9fe46b90cba83787d85a1589fe4d82f190c3afaecd4e41a4",
    "n_pages": 7,
-   "snapshot_chars": 32677
+   "snapshot_chars": 32665
   },
   "1612.02482": {
    "title": "Improving the Performance of Neural Machine Translation Involving Morphologically Rich Languages",
@@ -241,9 +241,9 @@
   "1612.03226": {
    "title": "Active Learning for Speech Recognition: the Power of Gradients",
    "pdf_sha256": "8475795b62187d16625ed7ea7d73203d5039ef345e25ddfafe78c7a2f5f4e0c8",
-   "snapshot_sha256": "2cbd67306e0feaf23cf03e578bd135d18afb8eee2284978bc47734a0f01676ef",
+   "snapshot_sha256": "8a2092dde16db0577b5154593a2d027829fffe7fd19b9e6bc66117e2e8e10c2d",
    "n_pages": 5,
-   "snapshot_chars": 15672
+   "snapshot_chars": 15648
   },
   "1612.06685": {
    "title": "Stateology: State-Level Interactive Charting of Language, Feelings, and Values",
@@ -283,9 +283,9 @@
   "1701.08229": {
    "title": "Feature Studies to Inform the Classification of Depressive Symptoms from Twitter Data for Population Health",
    "pdf_sha256": "a865c11647a8517d29e9d8c84822f2a533a6780563c4787b78c3707837e10113",
-   "snapshot_sha256": "e9ff269f5506022d880e40cc477af4d6b03eb4f29cdc47980cff70a344b435da",
+   "snapshot_sha256": "fc74c9cb925ed2afa77cbc34a96bcdb433d0bb9757d8420f6c23dad73f86a65e",
    "n_pages": 5,
-   "snapshot_chars": 21560
+   "snapshot_chars": 21547
   },
   "1702.03342": {
    "title": "Learning Concept Embeddings for Efficient Bag-of-Concepts Densification",
@@ -325,9 +325,9 @@
   "1703.10344": {
    "title": "Automated News Suggestions for Populating Wikipedia Entity Pages",
    "pdf_sha256": "f20ca8357ff02fe03415a9792568c12a02a42fe9c5bc9cfc6af1cc0e11d3b447",
-   "snapshot_sha256": "47439afdf6e0f7b7fb7f7ca9c0ae3b21b0dfacfff80a4e3d2375b62ae9128693",
+   "snapshot_sha256": "7f6f1801e4bcf683f2137815330b1faa8ccaba0fa30caaad9d66728dfbc08b19",
    "n_pages": 12,
-   "snapshot_chars": 61546
+   "snapshot_chars": 61534
   },
   "1704.04452": {
    "title": "Bringing Structure into Summaries: Crowdsourcing a Benchmark Corpus of Concept Maps",
@@ -360,9 +360,9 @@
   "1705.04153": {
    "title": "Dynamic Compositional Neural Networks over Tree Structure",
    "pdf_sha256": "3f7bdf47100c0e36c2d3d2bceb1c55c479dce5432a5f8aa429d5fb6a51fd87af",
-   "snapshot_sha256": "2f8b3ab07b84072159247c5999dee53496f920f690589f1542cc60fdb3c503d0",
+   "snapshot_sha256": "b5f2fe17da46f86ed03c2cef7bb6dd0e147b5d88490b64ea5a5e6fd8c6ecd860",
    "n_pages": 8,
-   "snapshot_chars": 33383
+   "snapshot_chars": 33347
   },
   "1705.05437": {
    "title": "A Biomedical Information Extraction Primer for NLP Researchers",
@@ -747,8 +747,8 @@
    "question": "What is the size of the parallel corpus used to train the model constraints?",
    "gold": [
     {
-     "start": 13015,
-     "end": 13717,
+     "start": 12990,
+     "end": 13692,
      "score": 91.2,
      "method": "fuzzy"
     }
@@ -761,8 +761,8 @@
    "question": "How does enforcing agreement between parse trees work across different languages?",
    "gold": [
     {
-     "start": 7050,
-     "end": 8174,
+     "start": 7036,
+     "end": 8160,
      "score": 97.7,
      "method": "fuzzy"
     }
@@ -803,20 +803,20 @@
    "question": "Do the authors report results only on English data?",
    "gold": [
     {
-     "start": 17496,
-     "end": 17805,
+     "start": 17491,
+     "end": 17800,
      "score": 100.0,
      "method": "exact"
     },
     {
-     "start": 18465,
-     "end": 18668,
+     "start": 18460,
+     "end": 18663,
      "score": 100.0,
      "method": "exact"
     },
     {
-     "start": 18670,
-     "end": 18791,
+     "start": 18665,
+     "end": 18786,
      "score": 100.0,
      "method": "exact"
     }
@@ -843,26 +843,26 @@
    "question": "What different correlations result when using different variants of ROUGE scores?",
    "gold": [
     {
-     "start": 27362,
-     "end": 27679,
+     "start": 27357,
+     "end": 27674,
      "score": 99.6,
      "method": "fuzzy"
     },
     {
-     "start": 30715,
-     "end": 31595,
+     "start": 30710,
+     "end": 31590,
      "score": 93.5,
      "method": "fuzzy"
     },
     {
-     "start": 36541,
-     "end": 37483,
+     "start": 36536,
+     "end": 37478,
      "score": 100.0,
      "method": "exact"
     },
     {
-     "start": 25594,
-     "end": 25965,
+     "start": 25589,
+     "end": 25960,
      "score": 95.5,
      "method": "fuzzy"
     }
@@ -875,14 +875,14 @@
    "question": "What manual Pyramid scores are used?",
    "gold": [
     {
-     "start": 17866,
-     "end": 18458,
+     "start": 17861,
+     "end": 18453,
      "score": 91.9,
      "method": "fuzzy"
     },
     {
-     "start": 18465,
-     "end": 18668,
+     "start": 18460,
+     "end": 18663,
      "score": 100.0,
      "method": "exact"
     }
@@ -1225,14 +1225,14 @@
    "question": "which datasets did they experiment with?",
    "gold": [
     {
-     "start": 15603,
-     "end": 15896,
+     "start": 15595,
+     "end": 15888,
      "score": 93.6,
      "method": "fuzzy"
     },
     {
-     "start": 16201,
-     "end": 16958,
+     "start": 16193,
+     "end": 16950,
      "score": 97.7,
      "method": "fuzzy"
     }
@@ -1245,8 +1245,8 @@
    "question": "which languages are explored?",
    "gold": [
     {
-     "start": 16201,
-     "end": 16958,
+     "start": 16193,
+     "end": 16950,
      "score": 97.7,
      "method": "fuzzy"
     }
@@ -1481,8 +1481,8 @@
    "question": "How does their ensemble method work?",
    "gold": [
     {
-     "start": 40425,
-     "end": 40588,
+     "start": 40424,
+     "end": 40587,
      "score": 100.0,
      "method": "exact"
     }
@@ -1509,8 +1509,8 @@
    "question": "How do they show there is space for further improvement?",
    "gold": [
     {
-     "start": 27577,
-     "end": 28534,
+     "start": 27576,
+     "end": 28533,
      "score": 99.1,
      "method": "fuzzy"
     }
@@ -1755,8 +1755,8 @@
    "question": "What topic is covered in the Chinese Facebook data? ",
    "gold": [
     {
-     "start": 17436,
-     "end": 19022,
+     "start": 17430,
+     "end": 19016,
      "score": 95.9,
      "method": "fuzzy"
     }
@@ -1769,14 +1769,14 @@
    "question": "How many layers does the UTCNN model have?",
    "gold": [
     {
-     "start": 12969,
-     "end": 14285,
+     "start": 12963,
+     "end": 14279,
      "score": 98.1,
      "method": "fuzzy"
     },
     {
-     "start": 16457,
-     "end": 16706,
+     "start": 16451,
+     "end": 16700,
      "score": 98.1,
      "method": "fuzzy"
     }
@@ -1789,8 +1789,8 @@
    "question": "What topics are included in the debate data?",
    "gold": [
     {
-     "start": 20024,
-     "end": 20686,
+     "start": 20018,
+     "end": 20680,
      "score": 99.6,
      "method": "fuzzy"
     }
@@ -1803,14 +1803,14 @@
    "question": "What is the size of the Chinese data?",
    "gold": [
     {
-     "start": 19090,
-     "end": 20019,
+     "start": 19084,
+     "end": 20013,
      "score": 99.9,
      "method": "fuzzy"
     },
     {
-     "start": 17436,
-     "end": 19022,
+     "start": 17430,
+     "end": 19016,
      "score": 95.9,
      "method": "fuzzy"
     }
@@ -1823,14 +1823,14 @@
    "question": "Did they collected the two datasets?",
    "gold": [
     {
-     "start": 17047,
-     "end": 17432,
+     "start": 17041,
+     "end": 17426,
      "score": 99.7,
      "method": "fuzzy"
     },
     {
-     "start": 20024,
-     "end": 20686,
+     "start": 20018,
+     "end": 20680,
      "score": 99.6,
      "method": "fuzzy"
     }
@@ -1843,8 +1843,8 @@
    "question": "What are the baselines?",
    "gold": [
     {
-     "start": 24142,
-     "end": 25502,
+     "start": 24136,
+     "end": 25496,
      "score": 97.7,
      "method": "fuzzy"
     }
@@ -1917,14 +1917,14 @@
      "method": "fuzzy"
     },
     {
-     "start": 6917,
-     "end": 7186,
+     "start": 6893,
+     "end": 7162,
      "score": 95.3,
      "method": "fuzzy"
     },
     {
-     "start": 7256,
-     "end": 7733,
+     "start": 7232,
+     "end": 7709,
      "score": 99.0,
      "method": "fuzzy"
     },
@@ -1935,8 +1935,8 @@
      "method": "fuzzy"
     },
     {
-     "start": 6152,
-     "end": 6275,
+     "start": 6140,
+     "end": 6263,
      "score": 91.7,
      "method": "fuzzy"
     }
@@ -1949,8 +1949,8 @@
    "question": "How much data samples do they start with before obtaining the initial model labels?",
    "gold": [
     {
-     "start": 8460,
-     "end": 8919,
+     "start": 8436,
+     "end": 8895,
      "score": 99.2,
      "method": "fuzzy"
     },
@@ -1969,8 +1969,8 @@
    "question": "Which model do they use for end-to-end speech recognition?",
    "gold": [
     {
-     "start": 7975,
-     "end": 8453,
+     "start": 7951,
+     "end": 8429,
      "score": 99.7,
      "method": "fuzzy"
     },
@@ -1989,8 +1989,8 @@
    "question": "Which dataset do they use?",
    "gold": [
     {
-     "start": 8460,
-     "end": 8919,
+     "start": 8436,
+     "end": 8895,
      "score": 99.2,
      "method": "fuzzy"
     }
@@ -2447,20 +2447,20 @@
      "method": "exact"
     },
     {
-     "start": 37422,
-     "end": 37656,
+     "start": 37410,
+     "end": 37644,
      "score": 99.5,
      "method": "fuzzy"
     },
     {
-     "start": 37665,
-     "end": 38025,
+     "start": 37653,
+     "end": 38013,
      "score": 97.9,
      "method": "fuzzy"
     },
     {
-     "start": 38651,
-     "end": 39073,
+     "start": 38639,
+     "end": 39061,
      "score": 96.2,
      "method": "fuzzy"
     }
@@ -2473,38 +2473,38 @@
    "question": "What baseline model is used?",
    "gold": [
     {
-     "start": 41860,
-     "end": 42131,
+     "start": 41848,
+     "end": 42119,
      "score": 100.0,
      "method": "exact"
     },
     {
-     "start": 42226,
-     "end": 42308,
+     "start": 42214,
+     "end": 42296,
      "score": 100.0,
      "method": "exact"
     },
     {
-     "start": 42317,
-     "end": 42422,
+     "start": 42305,
+     "end": 42410,
      "score": 96.2,
      "method": "fuzzy"
     },
     {
-     "start": 47938,
-     "end": 48262,
+     "start": 47926,
+     "end": 48250,
      "score": 100.0,
      "method": "exact"
     },
     {
-     "start": 48288,
-     "end": 48442,
+     "start": 48276,
+     "end": 48430,
      "score": 100.0,
      "method": "exact"
     },
     {
-     "start": 48447,
-     "end": 48523,
+     "start": 48435,
+     "end": 48511,
      "score": 95.2,
      "method": "fuzzy"
     }
@@ -2531,14 +2531,14 @@
    "question": "How do they determine the exact section to use the input article?",
    "gold": [
     {
-     "start": 27531,
-     "end": 28371,
+     "start": 27519,
+     "end": 28359,
      "score": 100.0,
      "method": "exact"
     },
     {
-     "start": 39789,
-     "end": 40151,
+     "start": 39777,
+     "end": 40139,
      "score": 96.2,
      "method": "fuzzy"
     }
