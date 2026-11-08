@@ -136,3 +136,19 @@ def test_paired_delta_detects_consistent_gain_and_not_noise():
 def test_paired_delta_rejects_unpaired_lengths():
     with pytest.raises(ValueError):
         paired_delta_ci([1.0, 2.0], [1.0])
+
+
+from eval_metrics import auroc, threshold_for_retention  # noqa: E402
+
+
+def test_auroc_perfect_inverse_ties_and_empty():
+    assert auroc([3, 4], [1, 2]) == 1.0 and auroc([1, 2], [3, 4]) == 0.0
+    assert auroc([1], [1]) == 0.5 and math.isnan(auroc([], [1]))
+
+
+def test_threshold_keeps_at_least_the_target_share():
+    s = [float(i) for i in range(1, 11)]  # 1..10
+    t = threshold_for_retention(s, 0.9)
+    assert t == 2.0 and sum(x >= t for x in s) / len(s) >= 0.9
+    assert threshold_for_retention(s, 1.0) == 1.0 and threshold_for_retention(s, 0.1) == 10.0
+    assert sum(x >= threshold_for_retention(s, 0.85) for x in s) >= 9  # rounds up: never keeps fewer than asked

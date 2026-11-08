@@ -120,3 +120,16 @@ def paired_delta_ci(a: list[float], b: list[float], n_boot: int = 2000, seed: in
     d = [y - x for x, y in zip(a, b, strict=True)]
     r = mean_ci(d, n_boot, seed)
     return {"delta": r["mean"], "ci95": r["ci95"], "excludes_zero": r["ci95"][0] > 0 or r["ci95"][1] < 0, "n": r["n"]}
+
+
+def auroc(pos: list[float], neg: list[float]) -> float:
+    """P(score of a random positive > a random negative), ties count half (Mann-Whitney U / (n_pos * n_neg))."""
+    if not pos or not neg:
+        return math.nan
+    return sum(1.0 if p > n else 0.5 if p == n else 0.0 for p in pos for n in neg) / (len(pos) * len(neg))
+
+
+def threshold_for_retention(scores: list[float], retention: float) -> float:
+    """Largest t such that at least `retention` of `scores` are >= t (answer when score >= t, else abstain)."""
+    s = sorted(scores, reverse=True)
+    return s[max(0, math.ceil(retention * len(s)) - 1)]
