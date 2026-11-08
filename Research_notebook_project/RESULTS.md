@@ -62,13 +62,40 @@ not re-measured on the current code.
 
 Offline arms only (no key needed): `python scripts/eval_hard_cases.py`; analysis in [docs/HARD_CASE_RESULTS.md](docs/HARD_CASE_RESULTS.md).
 
+### 4. PDF retrieval, E1-E4 (QASPER)
+Data: `evals/qasper/gold.json` (SHA-256 `54da6f57...`), built by `python scripts/build_qasper_gold.py --papers 60` from
+QASPER dev v0.3 (Allen AI, CC BY 4.0): the first 60 sorted paper ids with a usable arXiv PDF, 166 questions, 286 gold
+spans. Gold = QASPER's **human-annotated evidence paragraphs**, aligned to our parsed PDF text (82 exact, 204 fuzzy >= 90;
+74 of 360 evidence strings could not be aligned and were dropped, so 25 questions have no gold and are excluded).
+Setting: **all 60 papers in one notebook**, so a question competes with every paper's chunks. This is harder than the
+usual one-paper QASPER setting, which is why absolute recall is low; the per-paper setting is not measured.
+Nothing was tuned on these questions (candidates 20, RRF k 60, 480-token chunks, models fixed in advance).
+Command: `python scripts/run_retrieval_eval.py --database-url postgresql+asyncpg://...` (local models, no LLM, $0).
+Recorded at git `7edcf79` (clean tree) in `evals/retrieval_results.json`; two runs gave identical metrics.
+
+| Exp | Chunks | Retrieval | recall@5 | recall@10 (95% CI) | MRR@10 | nDCG@10 | p50 / p95 latency |
+|---|---|---|---|---|---|---|---|
+| E1 | fixed 350 words | dense | 0.225 | 0.270 (0.208-0.338) | 0.183 | 0.179 | 48 / 57 ms |
+| E2 | structure-aware | dense | 0.228 | 0.308 (0.245-0.379) | 0.192 | 0.195 | 51 / 56 ms |
+| E3 | structure-aware | dense + full-text, RRF | 0.220 | 0.323 (0.256-0.391) | 0.188 | 0.192 | 84 / 125 ms |
+| E4 | structure-aware | E3 + cross-encoder rerank of top 20 | 0.281 | 0.375 (0.305-0.445) | 0.238 | 0.241 | 2,290 / 2,568 ms |
+
+Paired bootstrap deltas on recall@10 (same questions): E2-E1 +0.038 (-0.009 to +0.089) and E3-E2 +0.015 (-0.029 to
++0.060) are **not distinguishable from zero**; E4-E3 +0.053 (+0.019 to +0.088) and E4-E1 +0.105 (+0.055 to +0.156) are.
+
+Decision: keep `hybrid+rerank` as the default (`app/retrieval.py`). The reranker is the only component with a measured
+gain; hybrid alone is not shown to help, and is kept only as the candidate generator for the reranker (E4 vs
+dense+rerank is not measured). Cost: rerank adds ~2.2 s per query on this CPU (12 cores, no GPU); latency is from one
+machine and is not portable. Recall is a ceiling for answer quality, not answer quality: chat answers are not measured yet.
+
 ## Not yet measured (blocked)
 | Item | Blocker |
 |---|---|
 | Verifier metrics on independent human labels | current labels are LLM-drafted and author-reviewed; 116 claims, short of the 150 target; verdicts not re-run on current code |
 | Cohen's kappa | second annotator on a subset (`python scripts/cohens_kappa.py`) |
 | NLI and LLM-judge baselines | NLI needs ~1.6 GB download; LLM-judge arm not built |
-| Retrieval recall@k (vector top-4 vs first-4 baseline), hybrid BM25 | gold-source labels |
+| Web-research retrieval recall@k (the `/research` pipeline's top-4 chunks; PDF retrieval is measured in section 4) | gold-source labels |
+| Retrieval: dense + rerank without full-text (isolates hybrid's value under rerank) | not run |
 | Ablation A/B/C with tokens, cost, p50/p95 | live provider runs + approval |
 
 ## Reproduce the reporter

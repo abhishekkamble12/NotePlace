@@ -20,6 +20,7 @@ from summarize_real_runs import summarize  # noqa: E402
 
 REAL, RUNS = ROOT / "evals" / "real", ROOT / "evals" / "eval_runs"
 OUT, README = ROOT / "evals" / "results.json", ROOT / "README.md"
+RETR = ROOT / "evals" / "retrieval_results.json"
 START, END = "<!-- results:start -->", "<!-- results:end -->"
 LABEL_PROVENANCE = "LLM-drafted, author-reviewed, single annotator (no kappa yet)"
 
@@ -77,6 +78,8 @@ def build() -> dict:
                          "fuzzy90_baseline": metrics(hgold, [fuzzy(r, 90) for r in hard])["accuracy"]},
         },
         "pipeline_runs": {"data": "10 live questions, Groq + Tavily; cost modeled from list prices, not billed", **summarize()},
+        # recorded by scripts/run_retrieval_eval.py (needs Postgres), so copied here, not recomputed
+        "retrieval": {"file": "evals/retrieval_results.json", "file_sha256": sha(RETR), **json.loads(RETR.read_text(encoding="utf-8"))},
     }
 
 
@@ -98,6 +101,13 @@ def table(r: dict) -> str:
                 f" | {h['n']} cases, {h['data']} |")
     rows.append(f"| Real pipeline runs | {p['jobs']} jobs, {p['llm_calls']} LLM calls, ${p['usd_modeled']} total, per-call latency"
                 f" p50 {p['call_latency_ms_p50'] / 1000:.2f} s / p95 {p['call_latency_ms_p95'] / 1000:.2f} s | {p['data']} |")
+    rm, e = r["retrieval"]["meta"], r["retrieval"]["experiments"]
+    r10 = {k: e[k]["metrics"]["recall@10"] for k in e}
+    d = r["retrieval"]["paired_deltas"]["E4-E3"]["recall@10"]
+    rows.append(f"| PDF retrieval recall@10 (E1 fixed+dense / E2 structure+dense / E3 +hybrid / E4 +rerank) |"
+                f" {' / '.join(f'{r10[k]['mean']:.3f}' for k in ('E1', 'E2', 'E3', 'E4'))}; rerank gain {d['delta']:+.3f}"
+                f" (paired CI {d['ci95'][0]:+.3f} to {d['ci95'][1]:+.3f}); E4 p50 {e['E4']['latency_ms']['total']['p50'] / 1000:.2f} s on CPU"
+                f" | QASPER dev, {rm['questions']} questions over {rm['papers']} papers in one notebook, human evidence spans; recorded run |")
     return "\n".join([START, "| Measurement | Value | Data |", "|---|---|---|", *rows, END])
 
 

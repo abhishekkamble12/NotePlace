@@ -92,6 +92,7 @@ drafted by an LLM and reviewed by the author, with one annotator, so they are no
 | Verifier on real claims, test split (held out) (n=43) | false-acceptance 1/12 = 0.083 (Wilson 0.015-0.354); precision 0.962 (Wilson 0.811-0.993); retention 0.806 (Wilson 0.637-0.908) | LLM-drafted, author-reviewed, single annotator (no kappa yet) |
 | Verifier on hard cases: full (recorded live run) vs Stage 1 (current code) vs fuzzy-90 baseline | 3-class accuracy 0.750 vs 0.458 vs 0.500 | 24 cases, synthetic, author-labeled, diagnostic only |
 | Real pipeline runs | 10 jobs, 142 LLM calls, $0.1262 total, per-call latency p50 1.18 s / p95 2.34 s | 10 live questions, Groq + Tavily; cost modeled from list prices, not billed |
+| PDF retrieval recall@10 (E1 fixed+dense / E2 structure+dense / E3 +hybrid / E4 +rerank) | 0.270 / 0.308 / 0.323 / 0.375; rerank gain +0.053 (paired CI +0.019 to +0.088); E4 p50 2.29 s on CPU | QASPER dev, 166 questions over 60 papers in one notebook, human evidence spans; recorded run |
 <!-- results:end -->
 
 ---
